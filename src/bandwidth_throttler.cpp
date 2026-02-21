@@ -1,12 +1,11 @@
 #include "bandwidth_throttler.hpp"
-#include <thread>
 #include <chrono>
 #include <algorithm>
 
 namespace duckdb {
 
-TokenBucket::TokenBucket(double bandwidth_bps, size_t burst_bytes)
-    : bandwidth_bps(bandwidth_bps), burst_bytes(burst_bytes), tokens(burst_bytes),
+TokenBucket::TokenBucket(double bandwidth_bps_p, size_t burst_bytes_p)
+    : bandwidth_bps(bandwidth_bps_p), burst_bytes(burst_bytes_p), tokens(burst_bytes_p),
       last_update(std::chrono::steady_clock::now()) {
 }
 
@@ -18,13 +17,23 @@ void TokenBucket::RefillTokens() {
 	// bandwidth_bps is bytes per second, so tokens per microsecond = bandwidth_bps / 1e6
 	double tokens_to_add = (bandwidth_bps / 1000000.0) * elapsed.count();
 	
+	size_t old_tokens = tokens;
 	tokens = std::min(burst_bytes, tokens + static_cast<size_t>(tokens_to_add));
 	last_update = now;
+	
+	// Notify waiting threads if tokens increased
+	if (tokens > old_tokens) {
+		cv.notify_all();
+	}
 }
 
 void TokenBucket::WaitForTokens(size_t bytes) {
 	if (bytes == 0) {
 		return;
+	}
+	
+	if (bandwidth_bps <= 0) {
+		return; // No bandwidth limit, don't wait
 	}
 	
 	std::unique_lock<std::mutex> lock(mutex);
@@ -36,22 +45,19 @@ void TokenBucket::WaitForTokens(size_t bytes) {
 	while (tokens < bytes) {
 		size_t tokens_needed = bytes - tokens;
 		
-		// Calculate how long to wait: tokens_needed / bandwidth_bps seconds, convert to milliseconds
-		double wait_time_ms = (static_cast<double>(tokens_needed) / bandwidth_bps) * 1000.0;
+		// Calculate when enough tokens will be available
+		// tokens_needed / bandwidth_bps gives seconds needed
+		double seconds_needed = static_cast<double>(tokens_needed) / bandwidth_bps;
+		auto wait_until_time = last_update + std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+			std::chrono::duration<double>(seconds_needed));
 		
-		// Ensure minimum wait time to avoid busy waiting, but cap at reasonable maximum
-		if (wait_time_ms < 0.1) {
-			wait_time_ms = 0.1;
-		}
-		if (wait_time_ms > 1000.0) {
-			wait_time_ms = 1000.0; // Cap at 1 second to prevent extremely long waits
-		}
+		// Wait until tokens are available or timeout
+		cv.wait_until(lock, wait_until_time, [this, bytes] {
+			RefillTokens();
+			return tokens >= bytes;
+		});
 		
-		lock.unlock();
-		std::this_thread::sleep_for(std::chrono::duration<double, std::milli>(wait_time_ms));
-		lock.lock();
-		
-		// Refill again after waiting
+		// Refill again after waiting (in case we were woken up)
 		RefillTokens();
 	}
 	
@@ -81,6 +87,7 @@ void TokenBucket::Reset() {
 	std::lock_guard<std::mutex> lock(mutex);
 	tokens = burst_bytes;
 	last_update = std::chrono::steady_clock::now();
+	cv.notify_all();
 }
 
 } // namespace duckdb
