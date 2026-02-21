@@ -1,6 +1,5 @@
 #pragma once
 
-#include "bandwidth_throttler.hpp"
 #include "duckdb/common/file_system.hpp"
 #include "latency_injection_file_handle.hpp"
 #include "latency_model.hpp"
@@ -13,15 +12,9 @@ public:
 
 	~LatencyInjectionFileSystem() override = default;
 
-	// Accessors for latency model and throttlers
+	// Accessor for latency model
 	LatencyModel &GetLatencyModel() {
 		return latency_model;
-	}
-	TokenBucket &GetReadThrottler() {
-		return read_throttler;
-	}
-	TokenBucket &GetWriteThrottler() {
-		return write_throttler;
 	}
 
 	// Override FileSystem methods to inject latency
@@ -93,8 +86,6 @@ public:
 private:
 	unique_ptr<FileSystem> wrapped_fs;
 	LatencyModel latency_model;
-	TokenBucket read_throttler;
-	TokenBucket write_throttler;
 
 	// Helper to get internal handle from LatencyInjectionFileHandle
 	static FileHandle &GetInternalHandle(FileHandle &handle) {
