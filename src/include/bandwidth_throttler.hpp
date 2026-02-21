@@ -16,9 +16,6 @@ public:
 	// Wait until enough tokens are available, then consume them
 	void WaitForTokens(size_t bytes);
 	
-	// Consume tokens (assumes tokens are already available)
-	void ConsumeTokens(size_t bytes);
-	
 	// Get current available tokens
 	size_t GetAvailableTokens();
 	

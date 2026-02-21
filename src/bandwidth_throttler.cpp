@@ -65,18 +65,6 @@ void TokenBucket::WaitForTokens(size_t bytes) {
 	tokens -= bytes;
 }
 
-void TokenBucket::ConsumeTokens(size_t bytes) {
-	std::lock_guard<std::mutex> lock(mutex);
-	RefillTokens();
-	if (tokens >= bytes) {
-		tokens -= bytes;
-	} else {
-		// This shouldn't happen if WaitForTokens was called first
-		// But handle it gracefully
-		tokens = 0;
-	}
-}
-
 size_t TokenBucket::GetAvailableTokens() {
 	std::lock_guard<std::mutex> lock(mutex);
 	RefillTokens();
