@@ -4,8 +4,8 @@
 namespace duckdb {
 
 LatencyInjectionFileHandle::LatencyInjectionFileHandle(LatencyInjectionFileSystem &fs_p,
-                                                       unique_ptr<FileHandle> internal_handle_p,
-                                                       const string &path_p, FileOpenFlags flags_p)
+                                                       unique_ptr<FileHandle> internal_handle_p, const string &path_p,
+                                                       FileOpenFlags flags_p)
     : FileHandle(fs_p, path_p, flags_p), internal_handle(std::move(internal_handle_p)) {
 }
 

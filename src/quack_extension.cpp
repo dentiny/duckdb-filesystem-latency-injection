@@ -37,18 +37,18 @@ static void LoadInternal(ExtensionLoader &loader) {
 	auto quack_openssl_version_scalar_function = ScalarFunction("quack_openssl_version", {LogicalType::VARCHAR},
 	                                                            LogicalType::VARCHAR, QuackOpenSSLVersionScalarFun);
 	loader.RegisterFunction(quack_openssl_version_scalar_function);
-	
+
 	// Register latency injection filesystem wrapper
 	// This will wrap the default filesystem or can be configured to wrap specific subsystems
 	// For now, we create a default configuration that can be customized
 	LatencyConfig default_config;
 	// Default config values are already set in the struct definition
 	// Users can customize these via environment variables or settings if needed
-	
+
 	// Get the database instance to access its filesystem
 	auto &db = loader.GetDatabaseInstance();
 	auto &vfs = db.GetFileSystem();
-	
+
 	// Extract and wrap the default filesystem
 	// Note: This is a simple approach - in practice, you might want to wrap specific subsystems
 	// For S3/httpfs, you would extract that subsystem and wrap it
@@ -57,10 +57,10 @@ static void LoadInternal(ExtensionLoader &loader) {
 		// If we can't extract, create a local filesystem to wrap
 		default_fs = FileSystem::CreateLocal();
 	}
-	
+
 	// Create the latency injection filesystem wrapper
 	auto latency_fs = make_uniq<LatencyInjectionFileSystem>(std::move(default_fs), default_config);
-	
+
 	// Register it as a subsystem
 	// Note: This replaces the default, which might not be desired
 	// A better approach would be to wrap specific subsystems like httpfs/s3fs

@@ -8,8 +8,7 @@ namespace duckdb {
 
 LatencyInjectionFileSystem::LatencyInjectionFileSystem(unique_ptr<FileSystem> wrapped_fs_p,
                                                        const LatencyConfig &config_p)
-    : wrapped_fs(std::move(wrapped_fs_p)),
-      latency_model(config_p),
+    : wrapped_fs(std::move(wrapped_fs_p)), latency_model(config_p),
       read_throttler(config_p.read_bandwidth_bps, config_p.read_burst_bytes),
       write_throttler(config_p.write_bandwidth_bps, config_p.write_burst_bytes) {
 }
@@ -49,7 +48,7 @@ void LatencyInjectionFileSystem::ApplyMetadataWriteLatency() {
 // ===--------------------------------------------------------------------===
 
 unique_ptr<FileHandle> LatencyInjectionFileSystem::OpenFile(const string &path, FileOpenFlags flags,
-                                                             optional_ptr<FileOpener> opener) {
+                                                            optional_ptr<FileOpener> opener) {
 	OpenFileInfo file_info(path);
 	return OpenFileExtended(file_info, flags, opener);
 }
@@ -65,9 +64,9 @@ unique_ptr<FileHandle> LatencyInjectionFileSystem::OpenFileExtended(const OpenFi
 }
 
 unique_ptr<FileHandle> LatencyInjectionFileSystem::OpenCompressedFile(QueryContext context,
-        unique_ptr<FileHandle> handle, bool write) {
-    ApplyStatLatency();
-    return wrapped_fs->OpenCompressedFile(context, std::move(handle), write);
+                                                                      unique_ptr<FileHandle> handle, bool write) {
+	ApplyStatLatency();
+	return wrapped_fs->OpenCompressedFile(context, std::move(handle), write);
 }
 
 void LatencyInjectionFileSystem::Read(FileHandle &handle, void *buffer, int64_t nr_bytes, idx_t location) {
@@ -76,7 +75,7 @@ void LatencyInjectionFileSystem::Read(FileHandle &handle, void *buffer, int64_t 
 		read_throttler.WaitForTokens(static_cast<size_t>(nr_bytes));
 		SleepForDuration(latency_ms);
 	}
-	
+
 	wrapped_fs->Read(GetInternalHandle(handle), buffer, nr_bytes, location);
 }
 
@@ -86,7 +85,7 @@ void LatencyInjectionFileSystem::Write(FileHandle &handle, void *buffer, int64_t
 		write_throttler.WaitForTokens(static_cast<size_t>(nr_bytes));
 		SleepForDuration(latency_ms);
 	}
-	
+
 	wrapped_fs->Write(GetInternalHandle(handle), buffer, nr_bytes, location);
 }
 
@@ -96,7 +95,7 @@ int64_t LatencyInjectionFileSystem::Read(FileHandle &handle, void *buffer, int64
 		read_throttler.WaitForTokens(static_cast<size_t>(nr_bytes));
 		SleepForDuration(latency_ms);
 	}
-	
+
 	return wrapped_fs->Read(GetInternalHandle(handle), buffer, nr_bytes);
 }
 
@@ -106,7 +105,7 @@ int64_t LatencyInjectionFileSystem::Write(FileHandle &handle, void *buffer, int6
 		write_throttler.WaitForTokens(static_cast<size_t>(nr_bytes));
 		SleepForDuration(latency_ms);
 	}
-	
+
 	return wrapped_fs->Write(GetInternalHandle(handle), buffer, nr_bytes);
 }
 
@@ -161,25 +160,30 @@ void LatencyInjectionFileSystem::RemoveDirectory(const string &directory, option
 }
 
 bool LatencyInjectionFileSystem::ListFiles(const string &directory,
-                                          const std::function<void(const string &, bool)> &callback,
-                                          FileOpener *opener) {
-	return ListFilesExtended(directory, [&callback](OpenFileInfo &info) {
-		bool is_dir = FileSystem::IsDirectory(info);
-		callback(info.path, is_dir);
-	}, opener);
+                                           const std::function<void(const string &, bool)> &callback,
+                                           FileOpener *opener) {
+	return ListFilesExtended(
+	    directory,
+	    [&callback](OpenFileInfo &info) {
+		    bool is_dir = FileSystem::IsDirectory(info);
+		    callback(info.path, is_dir);
+	    },
+	    opener);
 }
 
 bool LatencyInjectionFileSystem::ListFilesExtended(const string &directory,
                                                    const std::function<void(OpenFileInfo &info)> &callback,
                                                    optional_ptr<FileOpener> opener) {
 	ApplyListLatency();
-	return wrapped_fs->ListFiles(directory, [&callback](const string &name, bool is_dir) {
-		OpenFileInfo info;
-		info.path = name;
-		callback(info);
-	}, opener.get());
+	return wrapped_fs->ListFiles(
+	    directory,
+	    [&callback](const string &name, bool is_dir) {
+		    OpenFileInfo info;
+		    info.path = name;
+		    callback(info);
+	    },
+	    opener.get());
 }
-
 
 bool LatencyInjectionFileSystem::FileExists(const string &filename, optional_ptr<FileOpener> opener) {
 	ApplyStatLatency();
@@ -209,10 +213,9 @@ bool LatencyInjectionFileSystem::IsPipe(const string &filename, optional_ptr<Fil
 	return wrapped_fs->IsPipe(filename, opener);
 }
 
-void LatencyInjectionFileSystem::MoveFile(const string &source, const string &target,
-        optional_ptr<FileOpener> opener) {
-    ApplyMetadataWriteLatency();
-    wrapped_fs->MoveFile(source, target, opener);
+void LatencyInjectionFileSystem::MoveFile(const string &source, const string &target, optional_ptr<FileOpener> opener) {
+	ApplyMetadataWriteLatency();
+	wrapped_fs->MoveFile(source, target, opener);
 }
 
 string LatencyInjectionFileSystem::PathSeparator(const string &path) {
