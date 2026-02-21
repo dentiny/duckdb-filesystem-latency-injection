@@ -10,7 +10,8 @@ enum class OperationType {
 	LIST,
 	STAT,
 	READ,
-	WRITE
+	WRITE,
+	METADATA_WRITE
 };
 
 struct LatencyConfig {
@@ -19,6 +20,8 @@ struct LatencyConfig {
 	double list_stddev = 0.5;
 	double stat_mean_ms = 1.0;
 	double stat_stddev = 0.3;
+	double metadata_write_mean_ms = 3.0;
+	double metadata_write_stddev = 0.5;
 	double read_base_mean_ms = 5.0;
 	double read_base_stddev = 1.0;
 	double write_base_mean_ms = 10.0;

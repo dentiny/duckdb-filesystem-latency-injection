@@ -30,6 +30,9 @@ double LatencyModel::GetOperationLatency(OperationType op_type, size_t bytes) {
 	case OperationType::STAT:
 		base_latency = SampleLogNormal(config.stat_mean_ms, config.stat_stddev);
 		break;
+	case OperationType::METADATA_WRITE:
+		base_latency = SampleLogNormal(config.metadata_write_mean_ms, config.metadata_write_stddev);
+		break;
 	case OperationType::READ:
 		base_latency = SampleLogNormal(config.read_base_mean_ms, config.read_base_stddev);
 		if (bytes > 0 && config.read_bytes_per_ms > 0) {

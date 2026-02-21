@@ -65,12 +65,6 @@ void TokenBucket::WaitForTokens(size_t bytes) {
 	tokens -= bytes;
 }
 
-size_t TokenBucket::GetAvailableTokens() {
-	std::lock_guard<std::mutex> lock(mutex);
-	RefillTokens();
-	return tokens;
-}
-
 void TokenBucket::Reset() {
 	std::lock_guard<std::mutex> lock(mutex);
 	tokens = burst_bytes;

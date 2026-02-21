@@ -94,11 +94,19 @@ private:
 	TokenBucket read_throttler;
 	TokenBucket write_throttler;
 	
+	// Helper to get internal handle from LatencyInjectionFileHandle
+	static FileHandle &GetInternalHandle(FileHandle &handle) {
+		return *handle.Cast<LatencyInjectionFileHandle>().internal_handle.get();
+	}
+	
 	// Helper to inject latency for stat-like operations
 	void ApplyStatLatency();
 	
 	// Helper to inject latency for list operations
 	void ApplyListLatency();
+	
+	// Helper to inject latency for metadata write operations
+	void ApplyMetadataWriteLatency();
 	
 	// Helper to sleep for a duration in milliseconds
 	void SleepForDuration(double milliseconds);

@@ -1,9 +1,10 @@
 #pragma once
 
 #include "duckdb/common/common.hpp"
+
 #include <chrono>
-#include <mutex>
 #include <condition_variable>
+#include <mutex>
 
 namespace duckdb {
 
@@ -15,9 +16,6 @@ public:
 	
 	// Wait until enough tokens are available, then consume them
 	void WaitForTokens(size_t bytes);
-	
-	// Get current available tokens
-	size_t GetAvailableTokens();
 	
 	// Reset the token bucket
 	void Reset();

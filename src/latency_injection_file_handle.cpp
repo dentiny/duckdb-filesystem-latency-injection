@@ -9,8 +9,6 @@ LatencyInjectionFileHandle::LatencyInjectionFileHandle(LatencyInjectionFileSyste
     : FileHandle(fs_p, path_p, flags_p), internal_handle(std::move(internal_handle_p)) {
 }
 
-// Simple pass-through - latency is handled by FileSystem wrapper
-// Call through file_system (which is our LatencyInjectionFileSystem) to maintain proper behavior
 int64_t LatencyInjectionFileHandle::Read(void *buffer, idx_t nr_bytes) {
 	return file_system.Read(*this, buffer, nr_bytes);
 }
