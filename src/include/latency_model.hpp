@@ -15,13 +15,13 @@ enum class OperationType {
 
 struct LatencyConfig {
 	// Log-normal distribution parameters per operation
-	double list_mean = 2.0;
+	double list_mean_ms = 2.0;
 	double list_stddev = 0.5;
-	double stat_mean = 1.0;
+	double stat_mean_ms = 1.0;
 	double stat_stddev = 0.3;
-	double read_base_mean = 5.0;
+	double read_base_mean_ms = 5.0;
 	double read_base_stddev = 1.0;
-	double write_base_mean = 10.0;
+	double write_base_mean_ms = 10.0;
 	double write_base_stddev = 2.0;
 	// Size-dependent latency (latency per byte)
 	double read_bytes_per_ms = 1000000.0;  // bytes per millisecond

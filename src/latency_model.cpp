@@ -25,19 +25,19 @@ double LatencyModel::GetOperationLatency(OperationType op_type, size_t bytes) {
 	
 	switch (op_type) {
 	case OperationType::LIST:
-		base_latency = SampleLogNormal(config.list_mean, config.list_stddev);
+		base_latency = SampleLogNormal(config.list_mean_ms, config.list_stddev);
 		break;
 	case OperationType::STAT:
-		base_latency = SampleLogNormal(config.stat_mean, config.stat_stddev);
+		base_latency = SampleLogNormal(config.stat_mean_ms, config.stat_stddev);
 		break;
 	case OperationType::READ:
-		base_latency = SampleLogNormal(config.read_base_mean, config.read_base_stddev);
+		base_latency = SampleLogNormal(config.read_base_mean_ms, config.read_base_stddev);
 		if (bytes > 0 && config.read_bytes_per_ms > 0) {
 			base_latency += static_cast<double>(bytes) / config.read_bytes_per_ms;
 		}
 		break;
 	case OperationType::WRITE:
-		base_latency = SampleLogNormal(config.write_base_mean, config.write_base_stddev);
+		base_latency = SampleLogNormal(config.write_base_mean_ms, config.write_base_stddev);
 		if (bytes > 0 && config.write_bytes_per_ms > 0) {
 			base_latency += static_cast<double>(bytes) / config.write_bytes_per_ms;
 		}

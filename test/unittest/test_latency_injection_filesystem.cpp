@@ -30,7 +30,7 @@ TEST_CASE("Test latency injection wraps mock filesystem - Read operation", "[lat
 	// Configure latency injection with known values
 	LatencyConfig config;
 	config.enabled = true;
-	config.read_base_mean = 1.0;  // 1ms base latency (reduced for faster tests)
+	config.read_base_mean_ms = 1.0;  // 1ms base latency (reduced for faster tests)
 	config.read_base_stddev = 0.1;
 	config.read_bytes_per_ms = 1000000.0;  // 1MB/ms
 	config.read_bandwidth_bps = 100000000.0;  // 100MB/s
@@ -71,7 +71,7 @@ TEST_CASE("Test latency injection wraps mock filesystem - FileExists operation",
 
 	LatencyConfig config;
 	config.enabled = true;
-	config.stat_mean = 5.0;  // 5ms for stat operations
+	config.stat_mean_ms = 5.0;  // 5ms for stat operations
 	config.stat_stddev = 0.5;
 
 	auto latency_fs = make_uniq<LatencyInjectionFileSystem>(std::move(mock_filesystem), config);
@@ -94,7 +94,7 @@ TEST_CASE("Test latency injection wraps mock filesystem - ListFiles operation", 
 
 	LatencyConfig config;
 	config.enabled = true;
-	config.list_mean = 8.0;  // 8ms for list operations
+	config.list_mean_ms = 8.0;  // 8ms for list operations
 	config.list_stddev = 1.0;
 
 	auto latency_fs = make_uniq<LatencyInjectionFileSystem>(std::move(mock_filesystem), config);
@@ -138,7 +138,7 @@ TEST_CASE("Test latency injection with bandwidth throttling", "[latency injectio
 
 	LatencyConfig config;
 	config.enabled = true;
-	config.read_base_mean = 1.0;  // Small base latency
+	config.read_base_mean_ms = 1.0;  // Small base latency
 	config.read_base_stddev = 0.1;
 	config.read_bandwidth_bps = 10000.0;  // Very low bandwidth: 10KB/s
 	config.read_burst_bytes = 1000;  // 1KB burst
