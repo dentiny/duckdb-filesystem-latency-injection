@@ -1,5 +1,6 @@
 #include "latency_model.hpp"
 #include <chrono>
+#include <cmath>
 #include <random>
 
 namespace duckdb {
@@ -11,8 +12,19 @@ LatencyModel::LatencyModel(const LatencyConfig &config) : config(config) {
 }
 
 double LatencyModel::SampleLogNormal(double mean, double stddev) {
+	if (mean <= 0.0 || stddev < 0.0) {
+		return 0.0;
+	}
+
+	double variance = stddev * stddev;
+	double mean_squared = mean * mean;
+
+	double log_mean = std::log(mean_squared / std::sqrt(variance + mean_squared));
+	double log_stddev = std::sqrt(std::log(1.0 + variance / mean_squared));
+
+	std::lognormal_distribution<double> dist(log_mean, log_stddev);
+
 	std::lock_guard<std::mutex> lock(generator_mutex);
-	std::lognormal_distribution<double> dist(mean, stddev);
 	return dist(generator);
 }
 

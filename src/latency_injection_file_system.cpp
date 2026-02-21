@@ -278,6 +278,14 @@ bool LatencyInjectionFileSystem::CanSeek() {
 	return wrapped_fs->CanSeek();
 }
 
+void LatencyInjectionFileSystem::Seek(FileHandle &handle, idx_t location) {
+	wrapped_fs->Seek(GetInternalHandle(handle), location);
+}
+
+idx_t LatencyInjectionFileSystem::SeekPosition(FileHandle &handle) {
+	return wrapped_fs->SeekPosition(GetInternalHandle(handle));
+}
+
 bool LatencyInjectionFileSystem::OnDiskFile(FileHandle &handle) {
 	return wrapped_fs->OnDiskFile(GetInternalHandle(handle));
 }

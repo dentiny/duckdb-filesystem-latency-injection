@@ -1,6 +1,7 @@
 #include "catch/catch.hpp"
 
 #include "latency_injection_file_system.hpp"
+#include "latency_injection_fs_instance_state.hpp"
 #include "latency_model.hpp"
 #include "mock_filesystem.hpp"
 
@@ -35,7 +36,9 @@ TEST_CASE("Test latency injection wraps mock filesystem - Read operation", "[lat
 	config.read_base_stddev = 0.1;
 	config.read_bytes_per_ms = 1000000.0; // 1MB/ms
 
-	auto latency_fs = make_uniq<LatencyInjectionFileSystem>(std::move(mock_filesystem), config);
+	auto inst_state = make_shared_ptr<LatencyInjectionFsInstanceState>();
+	weak_ptr<LatencyInjectionFsInstanceState> inst_state_weak = inst_state;
+	auto latency_fs = make_uniq<LatencyInjectionFileSystem>(std::move(mock_filesystem), config, inst_state_weak);
 
 	// Open file and read
 	auto start_time = std::chrono::high_resolution_clock::now();
@@ -73,7 +76,9 @@ TEST_CASE("Test latency injection wraps mock filesystem - FileExists operation",
 	config.stat_mean_ms = 5.0; // 5ms for stat operations
 	config.stat_stddev = 0.5;
 
-	auto latency_fs = make_uniq<LatencyInjectionFileSystem>(std::move(mock_filesystem), config);
+	auto inst_state = make_shared_ptr<LatencyInjectionFsInstanceState>();
+	weak_ptr<LatencyInjectionFsInstanceState> inst_state_weak = inst_state;
+	auto latency_fs = make_uniq<LatencyInjectionFileSystem>(std::move(mock_filesystem), config, inst_state_weak);
 
 	auto start_time = std::chrono::high_resolution_clock::now();
 	bool exists = latency_fs->FileExists(TEST_FILENAME);
@@ -97,7 +102,9 @@ TEST_CASE("Test latency injection wraps mock filesystem - ListFiles operation", 
 	config.list_mean_ms = 8.0; // 8ms for list operations
 	config.list_stddev = 1.0;
 
-	auto latency_fs = make_uniq<LatencyInjectionFileSystem>(std::move(mock_filesystem), config);
+	auto inst_state = make_shared_ptr<LatencyInjectionFsInstanceState>();
+	weak_ptr<LatencyInjectionFsInstanceState> inst_state_weak = inst_state;
+	auto latency_fs = make_uniq<LatencyInjectionFileSystem>(std::move(mock_filesystem), config, inst_state_weak);
 
 	auto start_time = std::chrono::high_resolution_clock::now();
 	vector<OpenFileInfo> files = latency_fs->Glob("*");
@@ -118,7 +125,9 @@ TEST_CASE("Test latency injection can be disabled", "[latency injection test]") 
 	LatencyConfig config;
 	config.enabled = false; // Disable latency injection
 
-	auto latency_fs = make_uniq<LatencyInjectionFileSystem>(std::move(mock_filesystem), config);
+	auto inst_state = make_shared_ptr<LatencyInjectionFsInstanceState>();
+	weak_ptr<LatencyInjectionFsInstanceState> inst_state_weak = inst_state;
+	auto latency_fs = make_uniq<LatencyInjectionFileSystem>(std::move(mock_filesystem), config, inst_state_weak);
 
 	auto start_time = std::chrono::high_resolution_clock::now();
 	auto handle = latency_fs->OpenFile(TEST_FILENAME, FileOpenFlags::FILE_FLAGS_READ);

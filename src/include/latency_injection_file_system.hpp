@@ -13,7 +13,7 @@ struct LatencyInjectionFsInstanceState;
 class LatencyInjectionFileSystem : public FileSystem {
 public:
 	LatencyInjectionFileSystem(unique_ptr<FileSystem> wrapped_fs_p, const LatencyConfig &config_p,
-	                           weak_ptr<LatencyInjectionFsInstanceState> instance_state_p = weak_ptr<LatencyInjectionFsInstanceState>());
+	                           weak_ptr<LatencyInjectionFsInstanceState> instance_state_p);
 
 	~LatencyInjectionFileSystem() override;
 
@@ -79,6 +79,8 @@ public:
 	bool CanHandleFile(const string &fpath) override;
 	bool IsManuallySet() override;
 	bool CanSeek() override;
+	void Seek(FileHandle &handle, idx_t location) override;
+	idx_t SeekPosition(FileHandle &handle) override;
 	bool OnDiskFile(FileHandle &handle) override;
 
 	unique_ptr<FileHandle> OpenCompressedFile(QueryContext context, unique_ptr<FileHandle> handle, bool write) override;

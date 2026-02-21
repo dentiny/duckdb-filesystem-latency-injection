@@ -2,6 +2,7 @@
 
 #include "duckdb/common/file_system.hpp"
 #include "duckdb/common/local_file_system.hpp"
+#include "duckdb/common/open_file_info.hpp"
 
 namespace duckdb {
 
@@ -14,6 +15,12 @@ public:
 	}
 
 	bool CanHandleFile(const string &path) override;
+
+	unique_ptr<FileHandle> OpenFile(const string &path, FileOpenFlags flags,
+	                                optional_ptr<FileOpener> opener = nullptr) override;
+
+	unique_ptr<FileHandle> OpenFileExtended(const OpenFileInfo &file, FileOpenFlags flags,
+	                                        optional_ptr<FileOpener> opener) override;
 };
 
 } // namespace duckdb
