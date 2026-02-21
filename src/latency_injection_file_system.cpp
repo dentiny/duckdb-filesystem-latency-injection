@@ -1,4 +1,5 @@
 #include "latency_injection_file_system.hpp"
+
 #include "latency_injection_fs_instance_state.hpp"
 #include "duckdb/common/string_util.hpp"
 
@@ -9,16 +10,18 @@ namespace duckdb {
 
 LatencyInjectionFileSystem::LatencyInjectionFileSystem(unique_ptr<FileSystem> wrapped_fs_p,
                                                        const LatencyConfig &config_p,
-                                                       optional_ptr<LatencyInjectionFsInstanceState> instance_state_p)
+                                                       weak_ptr<LatencyInjectionFsInstanceState> instance_state_p)
     : wrapped_fs(std::move(wrapped_fs_p)), latency_model(config_p), instance_state(instance_state_p) {
-	if (instance_state) {
-		instance_state->registry.Register(this);
+	auto inst_state = instance_state.lock();
+	if (inst_state) {
+		inst_state->registry.Register(this);
 	}
 }
 
 LatencyInjectionFileSystem::~LatencyInjectionFileSystem() {
-	if (instance_state) {
-		instance_state->registry.Unregister(this);
+	auto inst_state = instance_state.lock();
+	if (inst_state) {
+		inst_state->registry.Unregister(this);
 	}
 }
 

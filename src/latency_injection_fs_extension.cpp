@@ -9,12 +9,10 @@
 #include "duckdb/function/scalar_function.hpp"
 #include "duckdb/execution/expression_executor_state.hpp"
 #include "duckdb/main/client_context.hpp"
-#include <duckdb/parser/parsed_data/create_scalar_function_info.hpp>
+#include "fake_filesystem.hpp"
 #include "latency_injection_file_system.hpp"
 #include "latency_injection_fs_instance_state.hpp"
 #include "latency_injection_fs_query_functions.hpp"
-#include "latency_model.hpp"
-#include "fake_filesystem.hpp"
 
 namespace duckdb {
 
@@ -56,8 +54,7 @@ void WrapLatencyFileSystem(const DataChunk &args, ExpressionState &state, Vector
 	LatencyConfig default_config;
 
 	// Create the latency injection filesystem wrapper
-	auto latency_fs =
-	    make_uniq<LatencyInjectionFileSystem>(std::move(internal_filesystem), default_config, inst_state.get());
+	auto latency_fs = make_uniq<LatencyInjectionFileSystem>(std::move(internal_filesystem), default_config, inst_state);
 	vfs.RegisterSubSystem(std::move(latency_fs));
 	DUCKDB_LOG_DEBUG(duckdb_instance,
 	                 StringUtil::Format("Wrap filesystem %s with latency injection filesystem.", filesystem_name));
@@ -65,11 +62,7 @@ void WrapLatencyFileSystem(const DataChunk &args, ExpressionState &state, Vector
 	result.Reference(Value(true));
 }
 
-} // namespace
-
-static void LoadInternal(ExtensionLoader &loader) {
-
-	// Get the database instance
+void LoadInternal(ExtensionLoader &loader) {
 	auto &db = loader.GetDatabaseInstance();
 
 	// Create per-instance state for this extension
@@ -94,6 +87,8 @@ static void LoadInternal(ExtensionLoader &loader) {
 	// Register wrapped latency injection filesystems info.
 	loader.RegisterFunction(GetWrappedLatencyFsFunc());
 }
+
+} // namespace
 
 void LatencyInjectionFsExtension::Load(ExtensionLoader &loader) {
 	LoadInternal(loader);
