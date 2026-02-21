@@ -11,7 +11,7 @@ class LatencyInjectionFileSystem;
 // Simple pass-through wrapper - all latency logic is in LatencyInjectionFileSystem
 class LatencyInjectionFileHandle : public FileHandle {
 public:
-	LatencyInjectionFileHandle(LatencyInjectionFileSystem &fs_p, unique_ptr<FileHandle> child_handle_p,
+	LatencyInjectionFileHandle(LatencyInjectionFileSystem &fs_p, unique_ptr<FileHandle> internal_handle_p,
 	                           const string &path_p, FileOpenFlags flags_p);
 	
 	~LatencyInjectionFileHandle() override = default;
@@ -29,71 +29,71 @@ public:
 	
 	void Close() override;
 	
-	// Delegate other methods to child handle
+	// Delegate other methods to internal handle
 	// Only GetProgress, GetFileCompressionType, and Close are virtual
 	idx_t GetProgress() override {
-		return child_handle->GetProgress();
+		return internal_handle->GetProgress();
 	}
 	
 	FileCompressionType GetFileCompressionType() override {
-		return child_handle->GetFileCompressionType();
+		return internal_handle->GetFileCompressionType();
 	}
 	
 	// Non-virtual methods - just delegate
 	bool CanSeek() {
-		return child_handle->CanSeek();
+		return internal_handle->CanSeek();
 	}
 	
 	bool IsPipe() {
-		return child_handle->IsPipe();
+		return internal_handle->IsPipe();
 	}
 	
 	bool OnDiskFile() {
-		return child_handle->OnDiskFile();
+		return internal_handle->OnDiskFile();
 	}
 	
 	idx_t GetFileSize() {
-		return child_handle->GetFileSize();
+		return internal_handle->GetFileSize();
 	}
 	
 	FileType GetType() {
-		return child_handle->GetType();
+		return internal_handle->GetType();
 	}
 	
 	void Seek(idx_t location) {
-		child_handle->Seek(location);
+		internal_handle->Seek(location);
 	}
 	
 	void Reset() {
-		child_handle->Reset();
+		internal_handle->Reset();
 	}
 	
 	idx_t SeekPosition() {
-		return child_handle->SeekPosition();
+		return internal_handle->SeekPosition();
 	}
 	
 	void Sync() {
-		child_handle->Sync();
+		internal_handle->Sync();
 	}
 	
 	void Truncate(int64_t new_size) {
-		child_handle->Truncate(new_size);
+		internal_handle->Truncate(new_size);
 	}
 	
 	string ReadLine() {
-		return child_handle->ReadLine();
+		return internal_handle->ReadLine();
 	}
 	
 	string ReadLine(QueryContext context) {
-		return child_handle->ReadLine(context);
+		return internal_handle->ReadLine(context);
 	}
 	
 	bool Trim(idx_t offset_bytes, idx_t length_bytes) {
-		return child_handle->Trim(offset_bytes, length_bytes);
+		return internal_handle->Trim(offset_bytes, length_bytes);
 	}
 
-	// Expose child_handle for LatencyInjectionFileSystem to access
-	unique_ptr<FileHandle> child_handle;
+	// Expose internal_handle for LatencyInjectionFileSystem to access
+	unique_ptr<FileHandle> internal_handle;
 };
 
 } // namespace duckdb

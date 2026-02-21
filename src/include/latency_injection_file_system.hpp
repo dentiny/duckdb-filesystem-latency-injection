@@ -1,12 +1,9 @@
 #pragma once
 
-#include "duckdb/common/file_system.hpp"
-#include "duckdb/main/client_context.hpp"
-#include "latency_model.hpp"
 #include "bandwidth_throttler.hpp"
+#include "duckdb/common/file_system.hpp"
 #include "latency_injection_file_handle.hpp"
-#include <thread>
-#include <chrono>
+#include "latency_model.hpp"
 
 namespace duckdb {
 
@@ -84,15 +81,11 @@ public:
 	std::string GetName() const override;
 	
 	bool SupportsOpenFileExtended() const override {
-		// Call the public OpenFile method to check if extended is supported
-		// We can't call the protected method directly
-		return true; // Assume true if we're overriding OpenFileExtended
+		return true;
 	}
 	
 	bool SupportsListFilesExtended() const override {
-		// Call the public ListFiles method to check if extended is supported
-		// We can't call the protected method directly
-		return true; // Assume true if we're overriding ListFilesExtended
+		return true;
 	}
 
 private:
@@ -109,9 +102,6 @@ private:
 	
 	// Helper to sleep for a duration in milliseconds
 	void SleepForDuration(double milliseconds);
-	
-	// Helper to check if handle is our wrapper
-	bool IsLatencyInjectionHandle(FileHandle &handle);
 };
 
 } // namespace duckdb

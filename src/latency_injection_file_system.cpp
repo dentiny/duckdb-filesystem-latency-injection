@@ -34,11 +34,6 @@ void LatencyInjectionFileSystem::ApplyListLatency() {
 	SleepForDuration(latency_ms);
 }
 
-bool LatencyInjectionFileSystem::IsLatencyInjectionHandle(FileHandle &handle) {
-	// Check if the handle is our wrapper by checking if it's a LatencyInjectionFileHandle
-	// We can do this by checking if the file_system reference matches
-	return &handle.file_system == this;
-}
 
 unique_ptr<FileHandle> LatencyInjectionFileSystem::OpenFile(const string &path, FileOpenFlags flags,
                                                              optional_ptr<FileOpener> opener) {
@@ -68,13 +63,8 @@ void LatencyInjectionFileSystem::Read(FileHandle &handle, void *buffer, int64_t 
 		SleepForDuration(latency_ms);
 	}
 	
-	// Extract child handle if it's our wrapper, otherwise use handle directly
-	if (IsLatencyInjectionHandle(handle)) {
-		wrapped_fs->Read(*static_cast<LatencyInjectionFileHandle &>(handle).child_handle.get(), buffer, nr_bytes,
-		                 location);
-	} else {
-		wrapped_fs->Read(handle, buffer, nr_bytes, location);
-	}
+	wrapped_fs->Read(*static_cast<LatencyInjectionFileHandle &>(handle).internal_handle.get(), buffer, nr_bytes,
+	                 location);
 }
 
 void LatencyInjectionFileSystem::Write(FileHandle &handle, void *buffer, int64_t nr_bytes, idx_t location) {
@@ -85,13 +75,8 @@ void LatencyInjectionFileSystem::Write(FileHandle &handle, void *buffer, int64_t
 		SleepForDuration(latency_ms);
 	}
 	
-	// Extract child handle if it's our wrapper, otherwise use handle directly
-	if (IsLatencyInjectionHandle(handle)) {
-		wrapped_fs->Write(*static_cast<LatencyInjectionFileHandle &>(handle).child_handle.get(), buffer, nr_bytes,
-		                 location);
-	} else {
-		wrapped_fs->Write(handle, buffer, nr_bytes, location);
-	}
+	wrapped_fs->Write(*static_cast<LatencyInjectionFileHandle &>(handle).internal_handle.get(), buffer, nr_bytes,
+	                 location);
 }
 
 int64_t LatencyInjectionFileSystem::Read(FileHandle &handle, void *buffer, int64_t nr_bytes) {
@@ -102,13 +87,8 @@ int64_t LatencyInjectionFileSystem::Read(FileHandle &handle, void *buffer, int64
 		SleepForDuration(latency_ms);
 	}
 	
-	// Extract child handle if it's our wrapper, otherwise use handle directly
-	if (IsLatencyInjectionHandle(handle)) {
-		return wrapped_fs->Read(*static_cast<LatencyInjectionFileHandle &>(handle).child_handle.get(), buffer,
-		                        nr_bytes);
-	} else {
-		return wrapped_fs->Read(handle, buffer, nr_bytes);
-	}
+	return wrapped_fs->Read(*static_cast<LatencyInjectionFileHandle &>(handle).internal_handle.get(), buffer,
+	                        nr_bytes);
 }
 
 int64_t LatencyInjectionFileSystem::Write(FileHandle &handle, void *buffer, int64_t nr_bytes) {
@@ -119,59 +99,34 @@ int64_t LatencyInjectionFileSystem::Write(FileHandle &handle, void *buffer, int6
 		SleepForDuration(latency_ms);
 	}
 	
-	// Extract child handle if it's our wrapper, otherwise use handle directly
-	if (IsLatencyInjectionHandle(handle)) {
-		return wrapped_fs->Write(*static_cast<LatencyInjectionFileHandle &>(handle).child_handle.get(), buffer,
-		                         nr_bytes);
-	} else {
-		return wrapped_fs->Write(handle, buffer, nr_bytes);
-	}
+	return wrapped_fs->Write(*static_cast<LatencyInjectionFileHandle &>(handle).internal_handle.get(), buffer,
+	                         nr_bytes);
 }
 
 int64_t LatencyInjectionFileSystem::GetFileSize(FileHandle &handle) {
 	ApplyStatLatency();
-	if (IsLatencyInjectionHandle(handle)) {
-		return wrapped_fs->GetFileSize(*static_cast<LatencyInjectionFileHandle &>(handle).child_handle.get());
-	}
-	return wrapped_fs->GetFileSize(handle);
+	return wrapped_fs->GetFileSize(*static_cast<LatencyInjectionFileHandle &>(handle).internal_handle.get());
 }
 
 timestamp_t LatencyInjectionFileSystem::GetLastModifiedTime(FileHandle &handle) {
 	ApplyStatLatency();
-	if (IsLatencyInjectionHandle(handle)) {
-		return wrapped_fs->GetLastModifiedTime(*static_cast<LatencyInjectionFileHandle &>(handle).child_handle.get());
-	}
-	return wrapped_fs->GetLastModifiedTime(handle);
+	return wrapped_fs->GetLastModifiedTime(*static_cast<LatencyInjectionFileHandle &>(handle).internal_handle.get());
 }
 
 string LatencyInjectionFileSystem::GetVersionTag(FileHandle &handle) {
-	if (IsLatencyInjectionHandle(handle)) {
-		return wrapped_fs->GetVersionTag(*static_cast<LatencyInjectionFileHandle &>(handle).child_handle.get());
-	}
-	return wrapped_fs->GetVersionTag(handle);
+	return wrapped_fs->GetVersionTag(*static_cast<LatencyInjectionFileHandle &>(handle).internal_handle.get());
 }
 
 FileType LatencyInjectionFileSystem::GetFileType(FileHandle &handle) {
-	if (IsLatencyInjectionHandle(handle)) {
-		return wrapped_fs->GetFileType(*static_cast<LatencyInjectionFileHandle &>(handle).child_handle.get());
-	}
-	return wrapped_fs->GetFileType(handle);
+	return wrapped_fs->GetFileType(*static_cast<LatencyInjectionFileHandle &>(handle).internal_handle.get());
 }
 
 void LatencyInjectionFileSystem::Truncate(FileHandle &handle, int64_t new_size) {
-	if (IsLatencyInjectionHandle(handle)) {
-		wrapped_fs->Truncate(*static_cast<LatencyInjectionFileHandle &>(handle).child_handle.get(), new_size);
-	} else {
-		wrapped_fs->Truncate(handle, new_size);
-	}
+	wrapped_fs->Truncate(*static_cast<LatencyInjectionFileHandle &>(handle).internal_handle.get(), new_size);
 }
 
 void LatencyInjectionFileSystem::FileSync(FileHandle &handle) {
-	if (IsLatencyInjectionHandle(handle)) {
-		wrapped_fs->FileSync(*static_cast<LatencyInjectionFileHandle &>(handle).child_handle.get());
-	} else {
-		wrapped_fs->FileSync(handle);
-	}
+	wrapped_fs->FileSync(*static_cast<LatencyInjectionFileHandle &>(handle).internal_handle.get());
 }
 
 bool LatencyInjectionFileSystem::DirectoryExists(const string &directory, optional_ptr<FileOpener> opener) {
@@ -290,10 +245,7 @@ bool LatencyInjectionFileSystem::CanSeek() {
 }
 
 bool LatencyInjectionFileSystem::OnDiskFile(FileHandle &handle) {
-	if (IsLatencyInjectionHandle(handle)) {
-		return wrapped_fs->OnDiskFile(*static_cast<LatencyInjectionFileHandle &>(handle).child_handle.get());
-	}
-	return wrapped_fs->OnDiskFile(handle);
+	return wrapped_fs->OnDiskFile(*static_cast<LatencyInjectionFileHandle &>(handle).internal_handle.get());
 }
 
 unique_ptr<FileHandle> LatencyInjectionFileSystem::OpenCompressedFile(QueryContext context,

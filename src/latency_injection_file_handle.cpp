@@ -4,9 +4,9 @@
 namespace duckdb {
 
 LatencyInjectionFileHandle::LatencyInjectionFileHandle(LatencyInjectionFileSystem &fs_p,
-                                                       unique_ptr<FileHandle> child_handle_p,
+                                                       unique_ptr<FileHandle> internal_handle_p,
                                                        const string &path_p, FileOpenFlags flags_p)
-    : FileHandle(fs_p, path_p, flags_p), child_handle(std::move(child_handle_p)) {
+    : FileHandle(fs_p, path_p, flags_p), internal_handle(std::move(internal_handle_p)) {
 }
 
 // Simple pass-through - latency is handled by FileSystem wrapper
@@ -40,7 +40,7 @@ void LatencyInjectionFileHandle::Write(QueryContext context, void *buffer, idx_t
 }
 
 void LatencyInjectionFileHandle::Close() {
-	child_handle->Close();
+	internal_handle->Close();
 }
 
 } // namespace duckdb
