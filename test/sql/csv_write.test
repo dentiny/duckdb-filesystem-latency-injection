@@ -1,0 +1,144 @@
+# name: test/sql/csv_write.test
+# description: test CSV write and read operations with latency injection filesystem
+# group: [sql]
+
+require latency_injection_fs
+
+# Wrap the fake filesystem with latency injection
+statement ok
+SELECT latency_inject_fs_wrap('latency_injection_fs_fake_filesystem');
+
+# Set very low latency values for this test to avoid hanging and make tests run faster
+# (CreateDirectoriesRecursive calls DirectoryExists in a loop which could be slow with high latency)
+
+statement ok
+SET latency_inject_fs_list_mean_ms = 0.001;
+
+statement ok
+SET latency_inject_fs_list_stddev = 0.001;
+
+statement ok
+SET latency_inject_fs_stat_mean_ms = 0.001;
+
+statement ok
+SET latency_inject_fs_stat_stddev = 0.001;
+
+statement ok
+SET latency_inject_fs_metadata_write_mean_ms = 0.001;
+
+statement ok
+SET latency_inject_fs_metadata_write_stddev = 0.001;
+
+statement ok
+SET latency_inject_fs_read_base_mean_ms = 0.001;
+
+statement ok
+SET latency_inject_fs_read_base_stddev = 0.001;
+
+statement ok
+SET latency_inject_fs_read_bytes_per_ms = 1000000000.0;
+
+statement ok
+SET latency_inject_fs_write_base_mean_ms = 0.001;
+
+statement ok
+SET latency_inject_fs_write_base_stddev = 0.001;
+
+statement ok
+SET latency_inject_fs_write_bytes_per_ms = 1000000000.0;
+
+# Note: All CSV files must be written to /tmp/latency_injection_fs_fake_filesystem/ for the fake filesystem to handle
+#
+# Create a test table with some data
+statement ok
+CREATE TABLE test_data AS SELECT * FROM VALUES 
+    (1, 'Alice', 25.5),
+    (2, 'Bob', 30.0),
+    (3, 'Charlie', 35.75)
+AS t(id, name, age);
+
+# Write the table to CSV using the wrapped filesystem
+statement ok
+COPY test_data TO '/tmp/latency_injection_fs_fake_filesystem/test_output.csv' (FORMAT CSV, HEADER);
+
+# Verify the CSV file was written by reading it back into a table first
+statement ok
+CREATE TABLE test_output_read AS SELECT * FROM read_csv_auto('/tmp/latency_injection_fs_fake_filesystem/test_output.csv');
+
+# Check row count
+query T
+SELECT COUNT(*) FROM test_output_read;
+----
+3
+
+# Verify the actual data
+query TTT
+SELECT * FROM test_output_read ORDER BY id;
+----
+1	Alice	25.5
+2	Bob	30.0
+3	Charlie	35.75
+
+# Test writing CSV without header
+statement ok
+COPY test_data TO '/tmp/latency_injection_fs_fake_filesystem/test_output_no_header.csv' (FORMAT CSV, HEADER false);
+
+# Verify the CSV file without header - read into table first to avoid header detection issues
+statement ok
+CREATE TABLE test_output_no_header_read AS SELECT * FROM read_csv_auto('/tmp/latency_injection_fs_fake_filesystem/test_output_no_header.csv', header=false);
+
+query TTT
+SELECT * FROM test_output_no_header_read ORDER BY column0;
+----
+1	Alice	25.5
+2	Bob	30.0
+3	Charlie	35.75
+
+# Test writing a larger dataset to verify write latency injection
+statement ok
+CREATE TABLE large_test_data AS SELECT * FROM range(100) AS t(id);
+
+statement ok
+COPY large_test_data TO '/tmp/latency_injection_fs_fake_filesystem/large_output.csv' (FORMAT CSV, HEADER false);
+
+# Verify the large CSV file
+query T
+SELECT COUNT(*) FROM read_csv_auto('/tmp/latency_injection_fs_fake_filesystem/large_output.csv', header=false);
+----
+100
+
+# Test complete round-trip: write CSV, read it back into a new table, and verify data matches
+statement ok
+CREATE TABLE roundtrip_source AS SELECT * FROM VALUES 
+    (10, 'Test1', 100.1),
+    (20, 'Test2', 200.2),
+    (30, 'Test3', 300.3)
+AS t(id, name, value);
+
+# Write to CSV
+statement ok
+COPY roundtrip_source TO '/tmp/latency_injection_fs_fake_filesystem/roundtrip_test.csv' (FORMAT CSV, HEADER);
+
+# Read CSV back into a new table
+statement ok
+CREATE TABLE roundtrip_dest AS 
+SELECT * FROM read_csv_auto('/tmp/latency_injection_fs_fake_filesystem/roundtrip_test.csv');
+
+# Verify the data matches exactly
+query TTT
+SELECT * FROM roundtrip_dest ORDER BY id;
+----
+10	Test1	100.1
+20	Test2	200.2
+30	Test3	300.3
+
+# Verify row counts match
+query T
+SELECT COUNT(*) FROM roundtrip_source;
+----
+3
+
+query T
+SELECT COUNT(*) FROM roundtrip_dest;
+----
+3
