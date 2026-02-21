@@ -1,0 +1,13 @@
+# name: test/sql/wrap_latency_filesystem.test
+# description: test latency injection filesystem extension wrap feature for filesystem instances.
+# group: [sql]
+
+require latency_injection_fs
+
+statement error
+SELECT latency_inject_fs_wrap('unregistered_filesystem');
+----
+Invalid Input Error: Filesystem unregistered_filesystem hasn't been registered yet! Use latency_inject_fs_list_filesystems() to see available filesystems.
+
+statement ok
+SELECT latency_inject_fs_wrap('latency_injection_fs_fake_filesystem');

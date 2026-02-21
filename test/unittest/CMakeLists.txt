@@ -1,10 +1,14 @@
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/src/include)
+get_filename_component(EXTENSION_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../.."
+                       ABSOLUTE)
+include_directories(${EXTENSION_SOURCE_DIR}/src/include)
+include_directories(${EXTENSION_SOURCE_DIR}/src/utils/include)
 include_directories(${DuckDB_SOURCE_DIR}/test/include)
 include_directories(${DuckDB_SOURCE_DIR}/third_party)
 
 file(GLOB_RECURSE LATENCY_INJECTION_FS_UNITTEST_OBJECTS
-     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
+     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
+     "${EXTENSION_SOURCE_DIR}/src/utils/mock_filesystem.cpp")
 
 add_executable(unittest_latency_injection
                main.cpp ${LATENCY_INJECTION_FS_UNITTEST_OBJECTS})

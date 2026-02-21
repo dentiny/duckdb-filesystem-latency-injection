@@ -6,15 +6,24 @@
 
 namespace duckdb {
 
+// Forward declaration
+struct LatencyInjectionFsInstanceState;
+
 class LatencyInjectionFileSystem : public FileSystem {
 public:
-	LatencyInjectionFileSystem(unique_ptr<FileSystem> wrapped_fs_p, const LatencyConfig &config_p);
+	LatencyInjectionFileSystem(unique_ptr<FileSystem> wrapped_fs_p, const LatencyConfig &config_p,
+	                           optional_ptr<LatencyInjectionFsInstanceState> instance_state_p = nullptr);
 
-	~LatencyInjectionFileSystem() override = default;
+	~LatencyInjectionFileSystem() override;
 
 	// Accessor for latency model
 	LatencyModel &GetLatencyModel() {
 		return latency_model;
+	}
+
+	// Get the wrapped filesystem
+	FileSystem *GetWrappedFileSystem() const {
+		return wrapped_fs.get();
 	}
 
 	// Override FileSystem methods to inject latency
@@ -86,6 +95,7 @@ public:
 private:
 	unique_ptr<FileSystem> wrapped_fs;
 	LatencyModel latency_model;
+	optional_ptr<LatencyInjectionFsInstanceState> instance_state;
 
 	// Helper to get internal handle from LatencyInjectionFileHandle
 	static FileHandle &GetInternalHandle(FileHandle &handle) {
