@@ -19,6 +19,12 @@ This extension is **useful for local benchmarking** scenarios where you want to 
 
 This is particularly valuable for developers who want to understand how DuckDB behaves with slow filesystems without the complexity and cost of setting up actual remote storage infrastructure.
 
+## Design Principles
+
+- Use log-normal distribution to simulate latency
+- Don't throttle any IO operations, which is based on the assumption that b/w and QPS is not bottleneck
+  + [rate_limit_fs](https://duckdb.org/community_extensions/extensions/rate_limit_fs) could be used to set throttle
+
 ## How to Use
 
 ### Wrapping a Filesystem
