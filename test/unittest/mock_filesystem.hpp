@@ -3,10 +3,9 @@
 
 #include "duckdb/common/file_system.hpp"
 #include "duckdb/common/open_file_info.hpp"
+#include "duckdb/common/deque.hpp"
 #include <mutex>
 #include <functional>
-#include <vector>
-#include <deque>
 
 namespace duckdb {
 
@@ -63,7 +62,7 @@ private:
 	timestamp_t last_modification_time = timestamp_t::infinity();
 	string version_tag;
 	bool file_exists = true;
-	std::deque<OpenFileInfo> glob_returns;
+	deque<OpenFileInfo> glob_returns;
 	std::function<void()> close_callback;
 	std::function<void()> dtor_callback;
 

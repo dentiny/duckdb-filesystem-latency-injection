@@ -9,7 +9,7 @@
 using namespace duckdb; // NOLINT
 
 namespace {
-const std::string TEST_FILENAME = "test_file.txt";
+const string TEST_FILENAME = "test_file.txt";
 constexpr int64_t TEST_FILESIZE = 100;
 } // namespace
 
@@ -43,12 +43,12 @@ TEST_CASE("Test latency injection wraps mock filesystem - Read operation", "[lat
 	auto handle = latency_fs->OpenFile(TEST_FILENAME, FileOpenFlags::FILE_FLAGS_READ);
 	REQUIRE(handle != nullptr);
 
-	std::string buffer(TEST_FILESIZE, '\0');
+	string buffer(TEST_FILESIZE, '\0');
 	latency_fs->Read(*handle, const_cast<char *>(buffer.data()), TEST_FILESIZE, 0);
 	auto end_time = std::chrono::high_resolution_clock::now();
 
 	// Verify data was read correctly
-	REQUIRE(buffer == std::string(TEST_FILESIZE, 'a'));
+	REQUIRE(buffer == string(TEST_FILESIZE, 'a'));
 
 	// Verify latency was injected (should take at least 1ms)
 	auto duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
@@ -121,11 +121,11 @@ TEST_CASE("Test latency injection can be disabled", "[latency injection test]") 
 
 	auto start_time = std::chrono::high_resolution_clock::now();
 	auto handle = latency_fs->OpenFile(TEST_FILENAME, FileOpenFlags::FILE_FLAGS_READ);
-	std::string buffer(TEST_FILESIZE, '\0');
+	string buffer(TEST_FILESIZE, '\0');
 	latency_fs->Read(*handle, const_cast<char *>(buffer.data()), TEST_FILESIZE, 0);
 	auto end_time = std::chrono::high_resolution_clock::now();
 
-	REQUIRE(buffer == std::string(TEST_FILESIZE, 'a'));
+	REQUIRE(buffer == string(TEST_FILESIZE, 'a'));
 
 	// With latency disabled, should be very fast
 	auto duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
@@ -147,11 +147,11 @@ TEST_CASE("Test latency injection with bandwidth throttling", "[latency injectio
 
 	auto start_time = std::chrono::high_resolution_clock::now();
 	auto handle = latency_fs->OpenFile(TEST_FILENAME, FileOpenFlags::FILE_FLAGS_READ);
-	std::string buffer(TEST_FILESIZE, '\0');
+	string buffer(TEST_FILESIZE, '\0');
 	latency_fs->Read(*handle, const_cast<char *>(buffer.data()), TEST_FILESIZE, 0);
 	auto end_time = std::chrono::high_resolution_clock::now();
 
-	REQUIRE(buffer == std::string(TEST_FILESIZE, 'a'));
+	REQUIRE(buffer == string(TEST_FILESIZE, 'a'));
 
 	// With low bandwidth (10KB/s), reading 100 bytes should take at least 10ms
 	// (100 bytes / 10000 bytes/s = 0.01s = 10ms)

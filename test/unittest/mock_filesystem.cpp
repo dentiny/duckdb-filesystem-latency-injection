@@ -111,7 +111,7 @@ void MockFileSystem::SetFileExists(bool exists) {
 
 void MockFileSystem::SetGlobResults(vector<OpenFileInfo> file_open_infos) {
 	std::lock_guard<std::mutex> lck(mtx);
-	glob_returns = std::deque<OpenFileInfo> {std::make_move_iterator(file_open_infos.begin()),
+	glob_returns = deque<OpenFileInfo> {std::make_move_iterator(file_open_infos.begin()),
 	                                         std::make_move_iterator(file_open_infos.end())};
 }
 
