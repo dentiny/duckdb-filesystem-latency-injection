@@ -38,6 +38,10 @@ void InstanceLatencyFsRegistry::Reset() {
 LatencyInjectionFsInstanceState::LatencyInjectionFsInstanceState() {
 }
 
+optional_idx LatencyInjectionFsInstanceState::GetEstimatedCacheMemory() const {
+	return optional_idx {};
+}
+
 //===--------------------------------------------------------------------===//
 // Helper functions to access instance state
 //===--------------------------------------------------------------------===//
