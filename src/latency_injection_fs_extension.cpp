@@ -1,6 +1,6 @@
 #define DUCKDB_EXTENSION_MAIN
 
-#include "quack_extension.hpp"
+#include "latency_injection_fs_extension.hpp"
 #include "duckdb.hpp"
 #include "duckdb/common/exception.hpp"
 #include "duckdb/function/scalar_function.hpp"
@@ -68,16 +68,16 @@ static void LoadInternal(ExtensionLoader &loader) {
 	// vfs.RegisterSubSystem(std::move(latency_fs));
 }
 
-void QuackExtension::Load(ExtensionLoader &loader) {
+void LatencyInjectionFsExtension::Load(ExtensionLoader &loader) {
 	LoadInternal(loader);
 }
-std::string QuackExtension::Name() {
-	return "quack";
+std::string LatencyInjectionFsExtension::Name() {
+	return "latency_injection_fs";
 }
 
-std::string QuackExtension::Version() const {
-#ifdef EXT_VERSION_QUACK
-	return EXT_VERSION_QUACK;
+std::string LatencyInjectionFsExtension::Version() const {
+#ifdef EXT_VERSION_LATENCY_INJECTION_FS
+	return EXT_VERSION_LATENCY_INJECTION_FS;
 #else
 	return "";
 #endif
@@ -87,7 +87,7 @@ std::string QuackExtension::Version() const {
 
 extern "C" {
 
-DUCKDB_CPP_EXTENSION_ENTRY(quack, loader) {
+DUCKDB_CPP_EXTENSION_ENTRY(latency_injection_fs, loader) {
 	duckdb::LoadInternal(loader);
 }
 }

@@ -3,9 +3,11 @@ include_directories(${CMAKE_SOURCE_DIR}/src/include)
 include_directories(${DuckDB_SOURCE_DIR}/test/include)
 include_directories(${DuckDB_SOURCE_DIR}/third_party)
 
-file(GLOB_RECURSE QUACK_UNITTEST_OBJECTS "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
+file(GLOB_RECURSE LATENCY_INJECTION_FS_UNITTEST_OBJECTS
+     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 
-add_executable(unittest_latency_injection main.cpp ${QUACK_UNITTEST_OBJECTS})
+add_executable(unittest_latency_injection
+               main.cpp ${LATENCY_INJECTION_FS_UNITTEST_OBJECTS})
 
 if(NOT WIN32
    AND NOT SUN
