@@ -31,8 +31,7 @@ public:
 	MockFileSystem(std::function<void()> close_callback_p, std::function<void()> dtor_callback_p);
 	~MockFileSystem() override = default;
 
-	unique_ptr<FileHandle> OpenFile(const string &path, FileOpenFlags flags,
-	                                optional_ptr<FileOpener> opener) override;
+	unique_ptr<FileHandle> OpenFile(const string &path, FileOpenFlags flags, optional_ptr<FileOpener> opener) override;
 	void Read(FileHandle &handle, void *buffer, int64_t nr_bytes, idx_t location) override;
 	int64_t Read(FileHandle &handle, void *buffer, int64_t nr_bytes) override;
 	vector<OpenFileInfo> Glob(const string &path, FileOpener *opener = nullptr) override;

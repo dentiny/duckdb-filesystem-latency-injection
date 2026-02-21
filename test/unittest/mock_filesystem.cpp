@@ -112,16 +112,14 @@ void MockFileSystem::SetFileExists(bool exists) {
 void MockFileSystem::SetGlobResults(vector<OpenFileInfo> file_open_infos) {
 	std::lock_guard<std::mutex> lck(mtx);
 	glob_returns = deque<OpenFileInfo> {std::make_move_iterator(file_open_infos.begin()),
-	                                         std::make_move_iterator(file_open_infos.end())};
+	                                    std::make_move_iterator(file_open_infos.end())};
 }
 
 vector<MockFileSystem::ReadOper> MockFileSystem::GetSortedReadOperations() {
 	std::lock_guard<std::mutex> lck(mtx);
-	std::sort(read_operations.begin(), read_operations.end(),
-	          [](const ReadOper &lhs, const ReadOper &rhs) {
-		          return std::tie(lhs.start_offset, lhs.bytes_to_read) <
-		                 std::tie(rhs.start_offset, rhs.bytes_to_read);
-	          });
+	std::sort(read_operations.begin(), read_operations.end(), [](const ReadOper &lhs, const ReadOper &rhs) {
+		return std::tie(lhs.start_offset, lhs.bytes_to_read) < std::tie(rhs.start_offset, rhs.bytes_to_read);
+	});
 	return read_operations;
 }
 

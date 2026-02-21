@@ -20,9 +20,9 @@ double LatencyModel::GetOperationLatency(OperationType op_type, size_t bytes) {
 	if (!config.enabled) {
 		return 0.0;
 	}
-	
+
 	double base_latency = 0.0;
-	
+
 	switch (op_type) {
 	case OperationType::LIST:
 		base_latency = SampleLogNormal(config.list_mean_ms, config.list_stddev);
@@ -46,7 +46,7 @@ double LatencyModel::GetOperationLatency(OperationType op_type, size_t bytes) {
 		}
 		break;
 	}
-	
+
 	return base_latency;
 }
 
