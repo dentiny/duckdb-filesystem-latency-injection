@@ -1,0 +1,20 @@
+# name: test/sql/wrapped_filesystems_info.test
+# description: test wrapped latency injection filesystems info
+# group: [sql]
+
+require latency_injection_fs
+
+# Initially, no filesystems should be wrapped
+query I
+SELECT * FROM latency_inject_fs_list_filesystems() ORDER BY wrapped_filesystems;
+----
+
+# Wrap a filesystem
+statement ok
+SELECT latency_inject_fs_wrap('latency_injection_fs_fake_filesystem');
+
+# Now latency_injection_fs_fake_filesystem should appear in the list
+query I
+SELECT * FROM latency_inject_fs_list_filesystems() ORDER BY wrapped_filesystems;
+----
+latency_injection_fs_fake_filesystem

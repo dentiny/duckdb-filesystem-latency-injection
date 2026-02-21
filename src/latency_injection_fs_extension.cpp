@@ -1,72 +1,94 @@
 #define DUCKDB_EXTENSION_MAIN
 
 #include "latency_injection_fs_extension.hpp"
+
 #include "duckdb.hpp"
 #include "duckdb/common/exception.hpp"
+#include "duckdb/common/opener_file_system.hpp"
+#include "duckdb/common/string_util.hpp"
 #include "duckdb/function/scalar_function.hpp"
-#include <duckdb/parser/parsed_data/create_scalar_function_info.hpp>
+#include "duckdb/execution/expression_executor_state.hpp"
+#include "duckdb/main/client_context.hpp"
+#include "fake_filesystem.hpp"
 #include "latency_injection_file_system.hpp"
-#include "latency_model.hpp"
-
-// OpenSSL linked through vcpkg
-#include <openssl/opensslv.h>
+#include "latency_injection_fs_instance_state.hpp"
+#include "latency_injection_fs_query_functions.hpp"
 
 namespace duckdb {
 
-inline void QuackScalarFun(DataChunk &args, ExpressionState &state, Vector &result) {
-	auto &name_vector = args.data[0];
-	UnaryExecutor::Execute<string_t, string_t>(name_vector, result, args.size(), [&](string_t name) {
-		return StringVector::AddString(result, "Quack " + name.GetString() + " 🐥");
-	});
+namespace {
+
+// Get database instance from expression state.
+// Returned instance ownership lies in the given [`state`].
+DatabaseInstance &GetDatabaseInstance(ExpressionState &state) {
+	auto *executor = state.root.executor;
+	auto &client_context = executor->GetContext();
+	return *client_context.db.get();
 }
 
-inline void QuackOpenSSLVersionScalarFun(DataChunk &args, ExpressionState &state, Vector &result) {
-	auto &name_vector = args.data[0];
-	UnaryExecutor::Execute<string_t, string_t>(name_vector, result, args.size(), [&](string_t name) {
-		return StringVector::AddString(result, "Quack " + name.GetString() + ", my linked OpenSSL version is " +
-		                                           OPENSSL_VERSION_TEXT);
-	});
-}
+// Wrap the filesystem with latency injection filesystem.
+// Throw exception if the requested filesystem hasn't been registered into duckdb instance.
+void WrapLatencyFileSystem(const DataChunk &args, ExpressionState &state, Vector &result) {
+	D_ASSERT(args.ColumnCount() == 1);
+	const string filesystem_name = args.GetValue(/*col_idx=*/0, /*index=*/0).ToString();
 
-static void LoadInternal(ExtensionLoader &loader) {
-	// Register a scalar function
-	auto quack_scalar_function = ScalarFunction("quack", {LogicalType::VARCHAR}, LogicalType::VARCHAR, QuackScalarFun);
-	loader.RegisterFunction(quack_scalar_function);
-
-	// Register another scalar function
-	auto quack_openssl_version_scalar_function = ScalarFunction("quack_openssl_version", {LogicalType::VARCHAR},
-	                                                            LogicalType::VARCHAR, QuackOpenSSLVersionScalarFun);
-	loader.RegisterFunction(quack_openssl_version_scalar_function);
-
-	// Register latency injection filesystem wrapper
-	// This will wrap the default filesystem or can be configured to wrap specific subsystems
-	// For now, we create a default configuration that can be customized
-	LatencyConfig default_config;
-	// Default config values are already set in the struct definition
-	// Users can customize these via environment variables or settings if needed
-
-	// Get the database instance to access its filesystem
-	auto &db = loader.GetDatabaseInstance();
-	auto &vfs = db.GetFileSystem();
-
-	// Extract and wrap the default filesystem
-	// Note: This is a simple approach - in practice, you might want to wrap specific subsystems
-	// For S3/httpfs, you would extract that subsystem and wrap it
-	auto default_fs = vfs.ExtractSubSystem("LocalFileSystem");
-	if (!default_fs) {
-		// If we can't extract, create a local filesystem to wrap
-		default_fs = FileSystem::CreateLocal();
+	// duckdb instance has a opener filesystem, which is a wrapper around virtual filesystem.
+	auto &duckdb_instance = GetDatabaseInstance(state);
+	auto &opener_filesystem = duckdb_instance.GetFileSystem().Cast<OpenerFileSystem>();
+	auto &vfs = opener_filesystem.GetFileSystem();
+	auto internal_filesystem = vfs.ExtractSubSystem(filesystem_name);
+	if (internal_filesystem == nullptr) {
+		throw InvalidInputException("Filesystem %s hasn't been registered yet! Use "
+		                            "latency_inject_fs_list_filesystems() to see available filesystems.",
+		                            filesystem_name);
 	}
 
-	// Create the latency injection filesystem wrapper
-	auto latency_fs = make_uniq<LatencyInjectionFileSystem>(std::move(default_fs), default_config);
+	// Get or create instance state
+	auto inst_state = GetInstanceStateShared(duckdb_instance);
+	if (!inst_state) {
+		inst_state = make_shared_ptr<LatencyInjectionFsInstanceState>();
+		SetInstanceState(duckdb_instance, inst_state);
+	}
 
-	// Register it as a subsystem
-	// Note: This replaces the default, which might not be desired
-	// A better approach would be to wrap specific subsystems like httpfs/s3fs
-	// For now, this demonstrates the integration
-	// vfs.RegisterSubSystem(std::move(latency_fs));
+	// Create default config
+	LatencyConfig default_config;
+
+	// Create the latency injection filesystem wrapper
+	auto latency_fs = make_uniq<LatencyInjectionFileSystem>(std::move(internal_filesystem), default_config, inst_state);
+	vfs.RegisterSubSystem(std::move(latency_fs));
+	DUCKDB_LOG_DEBUG(duckdb_instance,
+	                 StringUtil::Format("Wrap filesystem %s with latency injection filesystem.", filesystem_name));
+
+	result.Reference(Value(true));
 }
+
+void LoadInternal(ExtensionLoader &loader) {
+	auto &db = loader.GetDatabaseInstance();
+
+	// Create per-instance state for this extension
+	auto state = make_shared_ptr<LatencyInjectionFsInstanceState>();
+	SetInstanceState(db, state);
+
+	// Register a fake filesystem at extension load for testing purpose.
+	auto &opener_filesystem = db.GetFileSystem().Cast<OpenerFileSystem>();
+	auto &vfs = opener_filesystem.GetFileSystem();
+	vfs.RegisterSubSystem(make_uniq<LatencyInjectionFsFakeFileSystem>());
+
+	// Register a function to wrap duckdb-vfs-compatible filesystems.
+	// Example usage:
+	// D. LOAD httpfs;
+	// -- Wrap filesystem with its name.
+	// D. SELECT latency_inject_fs_wrap('HTTPFileSystem');
+	ScalarFunction wrap_latency_filesystem_function("latency_inject_fs_wrap",
+	                                                /*arguments=*/ {LogicalTypeId::VARCHAR},
+	                                                /*return_type=*/LogicalTypeId::BOOLEAN, WrapLatencyFileSystem);
+	loader.RegisterFunction(wrap_latency_filesystem_function);
+
+	// Register wrapped latency injection filesystems info.
+	loader.RegisterFunction(GetWrappedLatencyFsFunc());
+}
+
+} // namespace
 
 void LatencyInjectionFsExtension::Load(ExtensionLoader &loader) {
 	LoadInternal(loader);
