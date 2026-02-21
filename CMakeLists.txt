@@ -12,9 +12,8 @@ project(${TARGET_NAME})
 include_directories(src/include)
 
 set(EXTENSION_SOURCES
-    src/bandwidth_throttler.cpp src/latency_injection_file_handle.cpp
-    src/latency_injection_file_system.cpp src/latency_model.cpp
-    src/latency_injection_fs_extension.cpp)
+    src/latency_injection_file_handle.cpp src/latency_injection_file_system.cpp
+    src/latency_model.cpp src/latency_injection_fs_extension.cpp)
 
 build_static_extension(${TARGET_NAME} ${EXTENSION_SOURCES})
 build_loadable_extension(${TARGET_NAME} " " ${EXTENSION_SOURCES})
@@ -29,6 +28,6 @@ install(
   LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
   ARCHIVE DESTINATION "${INSTALL_LIB_DIR}")
 
-if(${BUILD_UNITTEST})
+if(${BUILD_UNITTESTS})
   add_subdirectory(test/unittest)
 endif()

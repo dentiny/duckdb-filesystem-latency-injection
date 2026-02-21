@@ -23,11 +23,6 @@ struct LatencyConfig {
 	// Size-dependent latency (latency per byte)
 	double read_bytes_per_ms = 1000000.0; // bytes per millisecond
 	double write_bytes_per_ms = 500000.0; // bytes per millisecond
-	// Bandwidth limits
-	double read_bandwidth_bps = 100000000.0; // bytes per second
-	double write_bandwidth_bps = 50000000.0; // bytes per second
-	size_t read_burst_bytes = 10000000;      // 10MB burst
-	size_t write_burst_bytes = 5000000;      // 5MB burst
 	// Enable/disable latency injection
 	bool enabled = true;
 };

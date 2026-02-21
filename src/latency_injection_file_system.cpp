@@ -8,9 +8,7 @@ namespace duckdb {
 
 LatencyInjectionFileSystem::LatencyInjectionFileSystem(unique_ptr<FileSystem> wrapped_fs_p,
                                                        const LatencyConfig &config_p)
-    : wrapped_fs(std::move(wrapped_fs_p)), latency_model(config_p),
-      read_throttler(config_p.read_bandwidth_bps, config_p.read_burst_bytes),
-      write_throttler(config_p.write_bandwidth_bps, config_p.write_burst_bytes) {
+    : wrapped_fs(std::move(wrapped_fs_p)), latency_model(config_p) {
 }
 
 void LatencyInjectionFileSystem::SleepForDuration(double milliseconds) {
@@ -72,7 +70,6 @@ unique_ptr<FileHandle> LatencyInjectionFileSystem::OpenCompressedFile(QueryConte
 void LatencyInjectionFileSystem::Read(FileHandle &handle, void *buffer, int64_t nr_bytes, idx_t location) {
 	if (latency_model.IsEnabled() && nr_bytes > 0) {
 		double latency_ms = latency_model.GetOperationLatency(OperationType::READ, static_cast<size_t>(nr_bytes));
-		read_throttler.WaitForTokens(static_cast<size_t>(nr_bytes));
 		SleepForDuration(latency_ms);
 	}
 
@@ -82,7 +79,6 @@ void LatencyInjectionFileSystem::Read(FileHandle &handle, void *buffer, int64_t 
 void LatencyInjectionFileSystem::Write(FileHandle &handle, void *buffer, int64_t nr_bytes, idx_t location) {
 	if (latency_model.IsEnabled() && nr_bytes > 0) {
 		double latency_ms = latency_model.GetOperationLatency(OperationType::WRITE, static_cast<size_t>(nr_bytes));
-		write_throttler.WaitForTokens(static_cast<size_t>(nr_bytes));
 		SleepForDuration(latency_ms);
 	}
 
@@ -92,7 +88,6 @@ void LatencyInjectionFileSystem::Write(FileHandle &handle, void *buffer, int64_t
 int64_t LatencyInjectionFileSystem::Read(FileHandle &handle, void *buffer, int64_t nr_bytes) {
 	if (latency_model.IsEnabled() && nr_bytes > 0) {
 		double latency_ms = latency_model.GetOperationLatency(OperationType::READ, static_cast<size_t>(nr_bytes));
-		read_throttler.WaitForTokens(static_cast<size_t>(nr_bytes));
 		SleepForDuration(latency_ms);
 	}
 
@@ -102,7 +97,6 @@ int64_t LatencyInjectionFileSystem::Read(FileHandle &handle, void *buffer, int64
 int64_t LatencyInjectionFileSystem::Write(FileHandle &handle, void *buffer, int64_t nr_bytes) {
 	if (latency_model.IsEnabled() && nr_bytes > 0) {
 		double latency_ms = latency_model.GetOperationLatency(OperationType::WRITE, static_cast<size_t>(nr_bytes));
-		write_throttler.WaitForTokens(static_cast<size_t>(nr_bytes));
 		SleepForDuration(latency_ms);
 	}
 
