@@ -14,7 +14,13 @@ set(LOADABLE_EXTENSION_NAME ${TARGET_NAME}_loadable_extension)
 project(${TARGET_NAME})
 include_directories(src/include)
 
-set(EXTENSION_SOURCES src/quack_extension.cpp)
+set(EXTENSION_SOURCES 
+	src/quack_extension.cpp
+	src/latency_model.cpp
+	src/bandwidth_throttler.cpp
+	src/latency_injection_file_handle.cpp
+	src/latency_injection_file_system.cpp
+)
 
 build_static_extension(${TARGET_NAME} ${EXTENSION_SOURCES})
 build_loadable_extension(${TARGET_NAME} " " ${EXTENSION_SOURCES})
@@ -28,3 +34,8 @@ install(
   EXPORT "${DUCKDB_EXPORT_SET}"
   LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
   ARCHIVE DESTINATION "${INSTALL_LIB_DIR}")
+
+# Add unittest if test directory exists
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/unittest/CMakeLists.txt")
+	add_subdirectory(test/unittest)
+endif()
