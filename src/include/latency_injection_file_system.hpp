@@ -12,9 +12,8 @@ struct LatencyInjectionFsInstanceState;
 
 class LatencyInjectionFileSystem : public FileSystem {
 public:
-	LatencyInjectionFileSystem(
-	    unique_ptr<FileSystem> wrapped_fs_p, const LatencyConfig &config_p,
-	    weak_ptr<LatencyInjectionFsInstanceState> instance_state_p = weak_ptr<LatencyInjectionFsInstanceState>());
+	LatencyInjectionFileSystem(unique_ptr<FileSystem> wrapped_fs_p, const LatencyConfig &config_p,
+	                           weak_ptr<LatencyInjectionFsInstanceState> instance_state_p);
 
 	~LatencyInjectionFileSystem() override;
 
