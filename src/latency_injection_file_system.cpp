@@ -11,7 +11,7 @@ namespace duckdb {
 LatencyInjectionFileSystem::LatencyInjectionFileSystem(unique_ptr<FileSystem> wrapped_fs_p,
                                                        const LatencyConfig &config_p,
                                                        weak_ptr<LatencyInjectionFsInstanceState> instance_state_p)
-    : wrapped_fs(std::move(wrapped_fs_p)), latency_model(config_p), instance_state(instance_state_p) {
+    : wrapped_fs(std::move(wrapped_fs_p)), latency_model(config_p), instance_state(std::move(instance_state_p)) {
 	auto inst_state = instance_state.lock();
 	if (inst_state) {
 		inst_state->registry.Register(this);

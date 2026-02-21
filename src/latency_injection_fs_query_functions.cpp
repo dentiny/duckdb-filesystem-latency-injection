@@ -1,9 +1,11 @@
 #include "latency_injection_fs_query_functions.hpp"
+
 #include "latency_injection_fs_instance_state.hpp"
 #include "latency_injection_file_system.hpp"
 #include "duckdb/common/opener_file_system.hpp"
 #include "duckdb/main/client_context.hpp"
 #include "duckdb/main/database.hpp"
+
 #include <algorithm>
 
 namespace duckdb {

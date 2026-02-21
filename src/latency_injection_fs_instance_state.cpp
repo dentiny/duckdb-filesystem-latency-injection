@@ -1,4 +1,5 @@
 #include "latency_injection_fs_instance_state.hpp"
+
 #include "latency_injection_file_system.hpp"
 #include "duckdb/main/database.hpp"
 #include "duckdb/main/client_context.hpp"
