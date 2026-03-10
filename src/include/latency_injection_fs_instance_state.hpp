@@ -54,6 +54,10 @@ struct LatencyInjectionFsInstanceState : public ObjectCacheEntry {
 	static string ObjectType() {
 		return OBJECT_TYPE;
 	}
+
+	optional_idx GetEstimatedCacheMemory() const override {
+		return optional_idx {};
+	}
 };
 
 //===--------------------------------------------------------------------===//
