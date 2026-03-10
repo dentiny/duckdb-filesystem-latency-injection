@@ -117,6 +117,11 @@ int64_t LatencyInjectionFileSystem::Write(FileHandle &handle, void *buffer, int6
 	return wrapped_fs->Write(GetInternalHandle(handle), buffer, nr_bytes);
 }
 
+FileMetadata LatencyInjectionFileSystem::Stats(FileHandle &handle) {
+	ApplyStatLatency();
+	return wrapped_fs->Stats(GetInternalHandle(handle));
+}
+
 int64_t LatencyInjectionFileSystem::GetFileSize(FileHandle &handle) {
 	ApplyStatLatency();
 	return wrapped_fs->GetFileSize(GetInternalHandle(handle));
