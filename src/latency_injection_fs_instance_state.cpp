@@ -35,8 +35,7 @@ void InstanceLatencyFsRegistry::Reset() {
 // LatencyInjectionFsInstanceState
 //===--------------------------------------------------------------------===//
 
-LatencyInjectionFsInstanceState::LatencyInjectionFsInstanceState() {
-}
+LatencyInjectionFsInstanceState::LatencyInjectionFsInstanceState() = default;
 
 //===--------------------------------------------------------------------===//
 // Helper functions to access instance state
