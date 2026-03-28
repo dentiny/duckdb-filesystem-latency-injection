@@ -86,7 +86,9 @@ unique_ptr<FileHandle> LatencyInjectionFileSystem::OpenFileExtended(const OpenFi
 unique_ptr<FileHandle> LatencyInjectionFileSystem::OpenCompressedFile(QueryContext context,
                                                                       unique_ptr<FileHandle> handle, bool write) {
 	ApplyStatLatency();
-	return wrapped_fs->OpenCompressedFile(context, std::move(handle), write);
+	auto latency_injection_file_handle = handle->Cast<LatencyInjectionFileHandle>();
+	auto internal_handle = std::move(latency_injection_file_handle.internal_handle);
+	return wrapped_fs->OpenCompressedFile(context, std::move(internal_handle), write);
 }
 
 void LatencyInjectionFileSystem::Read(FileHandle &handle, void *buffer, int64_t nr_bytes, idx_t location) {

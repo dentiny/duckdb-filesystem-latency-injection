@@ -3,8 +3,7 @@
 
 namespace duckdb {
 
-LatencyInjectionFsFakeFileSystem::LatencyInjectionFsFakeFileSystem() {
-}
+LatencyInjectionFsFakeFileSystem::LatencyInjectionFsFakeFileSystem() = default;
 
 bool LatencyInjectionFsFakeFileSystem::CanHandleFile(const string &path) {
 	return StringUtil::StartsWith(path, "/tmp/latency_injection_fs_fake_filesystem/");
