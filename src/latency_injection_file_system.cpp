@@ -68,7 +68,7 @@ unique_ptr<FileHandle> LatencyInjectionFileSystem::OpenFile(const string &path, 
 unique_ptr<FileHandle> LatencyInjectionFileSystem::OpenFileExtended(const OpenFileInfo &file, FileOpenFlags flags,
                                                                     optional_ptr<FileOpener> opener) {
 	ApplyStatLatency();
-	auto internal_handle = wrapped_fs->OpenFile(file.path, flags, opener);
+	auto internal_handle = wrapped_fs->OpenFileExtended(file, flags, opener);
 	if (!internal_handle) {
 		return nullptr;
 	}
