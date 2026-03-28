@@ -88,13 +88,9 @@ public:
 
 	std::string GetName() const override;
 
-	bool SupportsOpenFileExtended() const override {
-		return true;
-	}
+	bool SupportsOpenFileExtended() const override;
 
-	bool SupportsListFilesExtended() const override {
-		return true;
-	}
+	bool SupportsListFilesExtended() const override;
 
 private:
 	unique_ptr<FileSystem> wrapped_fs;
