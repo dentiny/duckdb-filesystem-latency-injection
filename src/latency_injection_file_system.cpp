@@ -173,10 +173,12 @@ void LatencyInjectionFileSystem::CreateDirectory(const string &directory, option
 }
 
 void LatencyInjectionFileSystem::CreateDirectoriesRecursive(const string &path, optional_ptr<FileOpener> opener) {
+	ApplyMetadataWriteLatency();
 	wrapped_fs->CreateDirectoriesRecursive(path, opener);
 }
 
 void LatencyInjectionFileSystem::RemoveDirectory(const string &directory, optional_ptr<FileOpener> opener) {
+	ApplyMetadataWriteLatency();
 	wrapped_fs->RemoveDirectory(directory, opener);
 }
 
