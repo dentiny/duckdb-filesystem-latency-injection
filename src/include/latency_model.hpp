@@ -4,7 +4,6 @@
 #include "latency_injection_fs_constants.hpp"
 
 #include <random>
-#include <mutex>
 
 namespace duckdb {
 
@@ -48,11 +47,27 @@ public:
 
 private:
 	LatencyConfig config;
-	std::mt19937 generator;
-	std::mutex generator_mutex;
 
-	// Sample from log-normal distribution
-	double SampleLogNormal(double mean, double stddev);
+	struct PrecomputedParams {
+		double log_mean = 0.0;
+		double log_stddev = 0.0;
+		bool valid = false;
+	};
+
+	PrecomputedParams list_params;
+	PrecomputedParams stat_params;
+	PrecomputedParams metadata_write_params;
+	PrecomputedParams read_params;
+	PrecomputedParams write_params;
+
+	// Convert user-facing (mean, stddev) into log-normal distribution parameters.
+	static PrecomputedParams ComputeParams(double mean, double stddev);
+
+	// Sample from precomputed parameters using a thread-local generator.
+	static double SampleFrom(const PrecomputedParams &params);
+
+	// Thread-local RNG.
+	static std::mt19937 &GetThreadLocalGenerator();
 };
 
 } // namespace duckdb
