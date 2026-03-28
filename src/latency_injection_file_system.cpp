@@ -59,6 +59,14 @@ void LatencyInjectionFileSystem::ApplyMetadataWriteLatency() {
 // Latency-affected operations
 // ===--------------------------------------------------------------------===
 
+bool LatencyInjectionFileSystem::SupportsOpenFileExtended() const {
+	return wrapped_fs->SupportsOpenFileExtended();
+}
+
+bool LatencyInjectionFileSystem::SupportsListFilesExtended() const {
+	return wrapped_fs->SupportsListFilesExtended();
+}
+
 unique_ptr<FileHandle> LatencyInjectionFileSystem::OpenFile(const string &path, FileOpenFlags flags,
                                                             optional_ptr<FileOpener> opener) {
 	OpenFileInfo file_info(path);
