@@ -60,11 +60,11 @@ void LatencyInjectionFileSystem::ApplyMetadataWriteLatency() {
 // ===--------------------------------------------------------------------===
 
 bool LatencyInjectionFileSystem::SupportsOpenFileExtended() const {
-	return wrapped_fs->SupportsOpenFileExtended();
+	return true;
 }
 
 bool LatencyInjectionFileSystem::SupportsListFilesExtended() const {
-	return wrapped_fs->SupportsListFilesExtended();
+	return true;
 }
 
 unique_ptr<FileHandle> LatencyInjectionFileSystem::OpenFile(const string &path, FileOpenFlags flags,
@@ -76,7 +76,7 @@ unique_ptr<FileHandle> LatencyInjectionFileSystem::OpenFile(const string &path, 
 unique_ptr<FileHandle> LatencyInjectionFileSystem::OpenFileExtended(const OpenFileInfo &file, FileOpenFlags flags,
                                                                     optional_ptr<FileOpener> opener) {
 	ApplyStatLatency();
-	auto internal_handle = wrapped_fs->OpenFileExtended(file, flags, opener);
+	auto internal_handle = wrapped_fs->OpenFile(file, flags, opener);
 	if (!internal_handle) {
 		return nullptr;
 	}
@@ -86,7 +86,7 @@ unique_ptr<FileHandle> LatencyInjectionFileSystem::OpenFileExtended(const OpenFi
 unique_ptr<FileHandle> LatencyInjectionFileSystem::OpenCompressedFile(QueryContext context,
                                                                       unique_ptr<FileHandle> handle, bool write) {
 	ApplyStatLatency();
-	auto latency_injection_file_handle = handle->Cast<LatencyInjectionFileHandle>();
+	auto &latency_injection_file_handle = handle->Cast<LatencyInjectionFileHandle>();
 	auto internal_handle = std::move(latency_injection_file_handle.internal_handle);
 	return wrapped_fs->OpenCompressedFile(context, std::move(internal_handle), write);
 }
