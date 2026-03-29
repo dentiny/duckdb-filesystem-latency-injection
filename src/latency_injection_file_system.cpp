@@ -1,7 +1,8 @@
 #include "latency_injection_file_system.hpp"
 
-#include "latency_injection_fs_instance_state.hpp"
+#include "duckdb/common/multi_file/multi_file_list.hpp"
 #include "duckdb/common/string_util.hpp"
+#include "latency_injection_fs_instance_state.hpp"
 
 #include <thread>
 #include <chrono>
@@ -227,7 +228,8 @@ bool LatencyInjectionFileSystem::TryRemoveFile(const string &filename, optional_
 
 vector<OpenFileInfo> LatencyInjectionFileSystem::Glob(const string &path, FileOpener *opener) {
 	ApplyListLatency();
-	return wrapped_fs->Glob(path, opener);
+	auto result = wrapped_fs->Glob(path, FileGlobOptions::ALLOW_EMPTY, opener);
+	return result->GetAllFiles();
 }
 
 // ===--------------------------------------------------------------------===
