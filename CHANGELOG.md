@@ -22,6 +22,10 @@
 
 [#11]: https://github.com/dentiny/duckdb-filesystem-latency-injection/pull/11
 
+- Fix glob implementation when extended version supported ([#16])
+
+[#16]: https://github.com/dentiny/duckdb-filesystem-latency-injection/pull/16
+
 ## 0.0.3
 
 ### Changed
