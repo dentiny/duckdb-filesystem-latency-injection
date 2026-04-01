@@ -226,6 +226,11 @@ bool LatencyInjectionFileSystem::TryRemoveFile(const string &filename, optional_
 	return wrapped_fs->TryRemoveFile(filename, opener);
 }
 
+void LatencyInjectionFileSystem::RemoveFiles(const vector<string> &filenames, optional_ptr<FileOpener> opener) {
+	ApplyMetadataWriteLatency();
+	wrapped_fs->RemoveFiles(filenames, opener);
+}
+
 vector<OpenFileInfo> LatencyInjectionFileSystem::Glob(const string &path, FileOpener *opener) {
 	ApplyListLatency();
 	auto result = wrapped_fs->Glob(path, FileGlobOptions::ALLOW_EMPTY, opener);
