@@ -62,6 +62,7 @@ public:
 	bool IsPipe(const string &filename, optional_ptr<FileOpener> opener = nullptr) override;
 	void RemoveFile(const string &filename, optional_ptr<FileOpener> opener = nullptr) override;
 	bool TryRemoveFile(const string &filename, optional_ptr<FileOpener> opener = nullptr) override;
+	void RemoveFiles(const vector<string> &filenames, optional_ptr<FileOpener> opener = nullptr) override;
 
 	vector<OpenFileInfo> Glob(const string &path, FileOpener *opener = nullptr) override;
 
