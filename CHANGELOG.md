@@ -1,3 +1,15 @@
+## 0.1.0
+
+### Changed
+
+- Upgrade DuckDB core and extension-ci-tools to v1.5.2
+
+### Fixed
+
+- Add missing filesystem APIs ([#17])
+
+[#17]: https://github.com/dentiny/duckdb-filesystem-latency-injection/pull/17
+
 ## 0.0.4
 
 ### Changed
