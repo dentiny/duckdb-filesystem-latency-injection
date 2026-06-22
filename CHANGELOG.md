@@ -1,3 +1,9 @@
+## 0.1.2
+
+### Changed
+
+- Upgrade DuckDB core and extension-ci-tools to v1.5.4
+
 ## 0.1.1
 
 ### Changed
