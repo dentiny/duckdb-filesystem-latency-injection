@@ -1,0 +1,19 @@
+# name: test/sql/latency_injection_fs_metadata.test
+# description: test catalog metadata for latency injection filesystem functions
+# group: [sql]
+
+require latency_injection_fs
+
+query I
+SELECT count(*)
+FROM duckdb_functions()
+WHERE function_name IN (
+    'latency_inject_fs_list_filesystems',
+    'latency_inject_fs_wrap'
+)
+AND description IS NOT NULL
+AND examples IS NOT NULL
+AND categories IS NOT NULL
+AND parameters IS NOT NULL;
+----
+2

@@ -92,7 +92,8 @@ TEST_CASE("Test Glob with GlobFilesExtended unsupported", "[glob test]") {
 	mock_filesystem->SetExtendedGlobResults(std::move(glob_results));
 
 	LatencyConfig config;
-	auto latency_fs = make_uniq<LatencyInjectionFileSystem>(std::move(mock_filesystem), config, weak_ptr<LatencyInjectionFsInstanceState>());
+	auto latency_fs = make_uniq<LatencyInjectionFileSystem>(std::move(mock_filesystem), config,
+	                                                        weak_ptr<LatencyInjectionFsInstanceState>());
 	auto results = latency_fs->Glob("s3://bucket/snapshots/*.parquet");
 	REQUIRE(mock_ptr->GetGlobInvocation() == 1);
 	REQUIRE(results.size() == 2);
@@ -112,7 +113,8 @@ TEST_CASE("Test Glob uses GlobFilesExtended", "[glob test]") {
 	mock_filesystem->SetExtendedGlobResults(std::move(glob_results));
 
 	LatencyConfig config;
-	auto latency_fs = make_uniq<LatencyInjectionFileSystem>(std::move(mock_filesystem), config, weak_ptr<LatencyInjectionFsInstanceState>());
+	auto latency_fs = make_uniq<LatencyInjectionFileSystem>(std::move(mock_filesystem), config,
+	                                                        weak_ptr<LatencyInjectionFsInstanceState>());
 	auto results = latency_fs->Glob("s3://bucket/snapshots/*.parquet");
 	REQUIRE(mock_ptr->GetGlobInvocation() == 0);
 	REQUIRE(mock_ptr->GetGlobExtendedInvocation() == 1);
