@@ -1,0 +1,29 @@
+# name: test/sql/auto_wrap.test
+# description: test wrapping filesystems at load and setting defaults from the environment
+# group: [sql]
+# Skipped unless run with:
+# LATENCY_INJECT_FS_AUTO_WRAP=latency_injection_fs_fake_filesystem LATENCY_INJECT_FS_READ_BASE_MEAN_MS=7 \
+#   build/release/test/unittest test/sql/auto_wrap.test
+
+require-env LATENCY_INJECT_FS_AUTO_WRAP latency_injection_fs_fake_filesystem
+
+require-env LATENCY_INJECT_FS_READ_BASE_MEAN_MS 7
+
+require latency_injection_fs
+
+# Wrapped while loading, without calling latency_inject_fs_wrap.
+query I
+SELECT * FROM latency_inject_fs_list_filesystems();
+----
+latency_injection_fs_fake_filesystem
+
+query I
+SELECT current_setting('latency_inject_fs_read_base_mean_ms');
+----
+7.0
+
+# Settings without an environment variable keep their defaults.
+query I
+SELECT current_setting('latency_inject_fs_read_base_stddev');
+----
+1.0

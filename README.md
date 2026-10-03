@@ -84,6 +84,18 @@ SET latency_inject_fs_write_base_stddev = 2.0;      -- Base standard deviation (
 SET latency_inject_fs_write_bytes_per_ms = 500000.0;  -- Throughput in bytes per millisecond (default: 500000.0)
 ```
 
+### Wrapping Without SQL
+
+Some databases open files before any SQL can run on them, for example ones a server creates internally. For those,
+the environment can wrap filesystems and configure latency when the extension loads:
+
+```sh
+LATENCY_INJECT_FS_AUTO_WRAP=SlateDBFileSystem LATENCY_INJECT_FS_READ_BASE_MEAN_MS=20 ./my-server
+```
+
+- `LATENCY_INJECT_FS_AUTO_WRAP` lists filesystems to wrap, comma-separated. Load this extension after the ones that register them, e.g. by listing it later in `extension_config.cmake`; a filesystem that isn't registered yet fails the load.
+- Each setting's default comes from the environment variable of the same name in upper case, e.g. `LATENCY_INJECT_FS_READ_BASE_MEAN_MS`. A filesystem keeps the values it was wrapped with; to change them for later wraps, use `SET GLOBAL`.
+
 ## License
 
 See [LICENSE](LICENSE) file for details.

@@ -74,30 +74,7 @@ LatencyConfig ReadLatencyConfigFromSettings(DatabaseInstance &db) {
 void WrapLatencyFileSystem(const DataChunk &args, ExpressionState &state, Vector &result) {
 	D_ASSERT(args.ColumnCount() == 1);
 	const string filesystem_name = args.GetValue(/*col_idx=*/0, /*index=*/0).ToString();
-
-	auto &duckdb_instance = GetDatabaseInstance(state);
-	auto &opener_filesystem = duckdb_instance.GetFileSystem().Cast<OpenerFileSystem>();
-	auto &vfs = opener_filesystem.GetFileSystem();
-	auto internal_filesystem = vfs.ExtractSubSystem(filesystem_name);
-	if (internal_filesystem == nullptr) {
-		throw InvalidInputException("Filesystem %s hasn't been registered yet! Use "
-		                            "latency_inject_fs_list_filesystems() to see available filesystems.",
-		                            filesystem_name);
-	}
-
-	auto inst_state = GetInstanceStateShared(duckdb_instance);
-	if (!inst_state) {
-		inst_state = make_shared_ptr<LatencyInjectionFsInstanceState>();
-		SetInstanceState(duckdb_instance, inst_state);
-	}
-
-	LatencyConfig config = ReadLatencyConfigFromSettings(duckdb_instance);
-	weak_ptr<LatencyInjectionFsInstanceState> inst_state_weak = inst_state;
-	auto latency_fs = make_uniq<LatencyInjectionFileSystem>(std::move(internal_filesystem), config, inst_state_weak);
-	vfs.RegisterSubSystem(std::move(latency_fs));
-	DUCKDB_LOG_DEBUG(duckdb_instance,
-	                 StringUtil::Format("Wrap filesystem %s with latency injection filesystem.", filesystem_name));
-
+	WrapFileSystem(GetDatabaseInstance(state), filesystem_name);
 	result.Reference(Value(true));
 }
 
@@ -132,6 +109,29 @@ void RegisterTableFunction(ExtensionLoader &loader, TableFunction function, vect
 }
 
 } // namespace
+
+void WrapFileSystem(DatabaseInstance &db, const string &filesystem_name) {
+	auto &opener_filesystem = db.GetFileSystem().Cast<OpenerFileSystem>();
+	auto &vfs = opener_filesystem.GetFileSystem();
+	auto internal_filesystem = vfs.ExtractSubSystem(filesystem_name);
+	if (internal_filesystem == nullptr) {
+		throw InvalidInputException("Filesystem %s hasn't been registered yet! Use "
+		                            "latency_inject_fs_list_filesystems() to see available filesystems.",
+		                            filesystem_name);
+	}
+
+	auto inst_state = GetLatencyInjectionFsStateShared(db);
+	if (!inst_state) {
+		inst_state = make_shared_ptr<LatencyInjectionFsInstanceState>();
+		SetInstanceState(db, inst_state);
+	}
+
+	LatencyConfig config = ReadLatencyConfigFromSettings(db);
+	weak_ptr<LatencyInjectionFsInstanceState> inst_state_weak = inst_state;
+	auto latency_fs = make_uniq<LatencyInjectionFileSystem>(std::move(internal_filesystem), config, inst_state_weak);
+	vfs.RegisterSubSystem(std::move(latency_fs));
+	DUCKDB_LOG_DEBUG(db, StringUtil::Format("Wrap filesystem %s with latency injection filesystem.", filesystem_name));
+}
 
 void RegisterLatencyInjectionFsFunctions(ExtensionLoader &loader) {
 	RegisterScalarFunction(loader,

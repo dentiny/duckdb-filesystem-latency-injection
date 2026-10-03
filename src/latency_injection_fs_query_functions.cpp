@@ -42,7 +42,7 @@ unique_ptr<GlobalTableFunctionState> WrappedLatencyFsFuncInit(ClientContext &con
 	auto &wrapped_filesystems = result->wrapped_filesystems;
 
 	// Get latency injection filesystems from per-instance registry
-	auto &inst_state = GetInstanceStateOrThrow(*context.db);
+	auto &inst_state = GetLatencyInjectionFsStateOrThrow(*context.db);
 	auto latency_filesystem_instances = inst_state.registry.GetAllLatencyFs();
 	wrapped_filesystems.reserve(latency_filesystem_instances.size());
 

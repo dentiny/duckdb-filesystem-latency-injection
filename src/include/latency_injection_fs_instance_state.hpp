@@ -68,12 +68,12 @@ struct LatencyInjectionFsInstanceState : public ObjectCacheEntry {
 void SetInstanceState(DatabaseInstance &instance, shared_ptr<LatencyInjectionFsInstanceState> state);
 
 // Get instance state as shared_ptr from DatabaseInstance (returns nullptr if not set)
-shared_ptr<LatencyInjectionFsInstanceState> GetInstanceStateShared(DatabaseInstance &instance);
+shared_ptr<LatencyInjectionFsInstanceState> GetLatencyInjectionFsStateShared(DatabaseInstance &instance);
 
 // Get instance state, throwing if not found
-LatencyInjectionFsInstanceState &GetInstanceStateOrThrow(DatabaseInstance &instance);
+LatencyInjectionFsInstanceState &GetLatencyInjectionFsStateOrThrow(DatabaseInstance &instance);
 
 // Get instance state from ClientContext, throwing if not found
-LatencyInjectionFsInstanceState &GetInstanceStateOrThrow(ClientContext &context);
+LatencyInjectionFsInstanceState &GetLatencyInjectionFsStateOrThrow(ClientContext &context);
 
 } // namespace duckdb

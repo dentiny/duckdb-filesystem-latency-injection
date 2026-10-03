@@ -46,7 +46,7 @@ void SetInstanceState(DatabaseInstance &instance, shared_ptr<LatencyInjectionFsI
 	object_cache.Put(LatencyInjectionFsInstanceState::CACHE_KEY, std::move(state));
 }
 
-shared_ptr<LatencyInjectionFsInstanceState> GetInstanceStateShared(DatabaseInstance &instance) {
+shared_ptr<LatencyInjectionFsInstanceState> GetLatencyInjectionFsStateShared(DatabaseInstance &instance) {
 	auto &object_cache = instance.GetObjectCache();
 	auto entry = object_cache.Get<LatencyInjectionFsInstanceState>(LatencyInjectionFsInstanceState::CACHE_KEY);
 	if (!entry) {
@@ -55,16 +55,16 @@ shared_ptr<LatencyInjectionFsInstanceState> GetInstanceStateShared(DatabaseInsta
 	return entry;
 }
 
-LatencyInjectionFsInstanceState &GetInstanceStateOrThrow(DatabaseInstance &instance) {
-	auto state = GetInstanceStateShared(instance);
+LatencyInjectionFsInstanceState &GetLatencyInjectionFsStateOrThrow(DatabaseInstance &instance) {
+	auto state = GetLatencyInjectionFsStateShared(instance);
 	if (!state) {
 		throw InternalException("LatencyInjectionFsInstanceState not found");
 	}
 	return *state;
 }
 
-LatencyInjectionFsInstanceState &GetInstanceStateOrThrow(ClientContext &context) {
-	return GetInstanceStateOrThrow(*context.db);
+LatencyInjectionFsInstanceState &GetLatencyInjectionFsStateOrThrow(ClientContext &context) {
+	return GetLatencyInjectionFsStateOrThrow(*context.db);
 }
 
 } // namespace duckdb
