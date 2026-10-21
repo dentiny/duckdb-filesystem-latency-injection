@@ -17,14 +17,17 @@ set_target_properties(
   unittest_latency_injection PROPERTIES RUNTIME_OUTPUT_DIRECTORY
                                         "${CMAKE_BINARY_DIR}/test")
 
-if(NOT WIN32
+# Community prebuilt builds provide only the static DuckDB library.
+if(NOT PREBUILT_BINARY
+   AND NOT WIN32
    AND NOT SUN
    AND NOT ZOS)
   target_link_libraries(unittest_latency_injection test_helpers duckdb
-                        ${EXTENSION_NAME})
+                        ${EXTENSION_NAME} duckdb_cpp_api)
 else()
   target_link_libraries(unittest_latency_injection test_helpers duckdb_static
-                        ${EXTENSION_NAME})
+                        ${EXTENSION_NAME} duckdb_cpp_api)
+  link_extension_libraries(unittest_latency_injection "")
 endif()
 
 if(MINGW OR WIN32)
