@@ -4,7 +4,7 @@
 #include "duckdb/common/file_system.hpp"
 #include "duckdb/common/open_file_info.hpp"
 #include "duckdb/common/deque.hpp"
-#include <mutex>
+#include "duckdb/common/mutex.hpp"
 #include <functional>
 
 namespace duckdb {
@@ -57,22 +57,22 @@ public:
 	void ClearReadOperations();
 
 private:
-	int64_t file_size = 0;
-	timestamp_t last_modification_time = timestamp_t::infinity();
-	string version_tag;
-	bool file_exists = true;
-	deque<OpenFileInfo> glob_returns;
+	mutable annotated_mutex mtx;
+	int64_t file_size DUCKDB_GUARDED_BY(mtx) = 0;
+	timestamp_t last_modification_time DUCKDB_GUARDED_BY(mtx) = timestamp_t::infinity();
+	string version_tag DUCKDB_GUARDED_BY(mtx);
+	bool file_exists DUCKDB_GUARDED_BY(mtx) = true;
+	deque<OpenFileInfo> glob_returns DUCKDB_GUARDED_BY(mtx);
 	std::function<void()> close_callback;
 	std::function<void()> dtor_callback;
 
-	mutable std::mutex mtx;
-	uint64_t file_open_invocation = 0;
-	uint64_t glob_invocation = 0;
-	uint64_t get_file_size_invocation = 0;
-	uint64_t get_last_mod_time_invocation = 0;
-	uint64_t get_version_tag_invocation = 0;
-	uint64_t file_exists_invocation = 0;
-	vector<ReadOper> read_operations;
+	uint64_t file_open_invocation DUCKDB_GUARDED_BY(mtx) = 0;
+	uint64_t glob_invocation DUCKDB_GUARDED_BY(mtx) = 0;
+	uint64_t get_file_size_invocation DUCKDB_GUARDED_BY(mtx) = 0;
+	uint64_t get_last_mod_time_invocation DUCKDB_GUARDED_BY(mtx) = 0;
+	uint64_t get_version_tag_invocation DUCKDB_GUARDED_BY(mtx) = 0;
+	uint64_t file_exists_invocation DUCKDB_GUARDED_BY(mtx) = 0;
+	vector<ReadOper> read_operations DUCKDB_GUARDED_BY(mtx);
 };
 
 } // namespace duckdb

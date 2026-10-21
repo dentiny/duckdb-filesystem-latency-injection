@@ -5,16 +5,46 @@
 require latency_injection_fs
 
 # Initially, no filesystems should be wrapped
-query I
-SELECT * FROM latency_inject_fs_list_filesystems() ORDER BY wrapped_filesystems;
+query T
+SELECT WRAPPED_FILESYSTEMS FROM LATENCY_INJECT_FS_LIST_FILESYSTEMS() ORDER BY WRAPPED_FILESYSTEMS;
 ----
 
 # Wrap a filesystem
 statement ok
-SELECT latency_inject_fs_wrap('latency_injection_fs_fake_filesystem');
+PREPARE wrap_filesystem AS SELECT latency_inject_fs_wrap('latency_injection_fs_fake_filesystem');
+
+# Preparing a side-effecting wrapper function must not modify the filesystem registry.
+query I
+SELECT count(*) FROM latency_inject_fs_list_filesystems();
+----
+0
+
+query T
+EXECUTE wrap_filesystem;
+----
+true
 
 # Now latency_injection_fs_fake_filesystem should appear in the list
-query I
-SELECT * FROM latency_inject_fs_list_filesystems() ORDER BY wrapped_filesystems;
+query T
+SELECT WRAPPED_FILESYSTEMS FROM LATENCY_INJECT_FS_LIST_FILESYSTEMS() ORDER BY WRAPPED_FILESYSTEMS;
 ----
 latency_injection_fs_fake_filesystem
+
+# The scalar executor handles NULL and selected input rows without losing side effects.
+query T
+SELECT latency_inject_fs_wrap(name)
+FROM (VALUES (NULL), ('LatencyInjectionFileSystem(latency_injection_fs_fake_filesystem)')) v(name);
+----
+NULL
+true
+
+query T
+SELECT wrapped_filesystems FROM latency_inject_fs_list_filesystems() ORDER BY wrapped_filesystems;
+----
+LatencyInjectionFileSystem(latency_injection_fs_fake_filesystem)
+latency_injection_fs_fake_filesystem
+
+statement error
+SELECT latency_inject_fs_wrap('missing_filesystem');
+----
+Filesystem missing_filesystem hasn't been registered yet!

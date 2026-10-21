@@ -4,8 +4,10 @@
 #include "duckdb/common/shared_ptr.hpp"
 #include "duckdb/common/string.hpp"
 #include "duckdb/common/unordered_set.hpp"
+#include "duckdb/common/vector.hpp"
 #include "duckdb/storage/object_cache.hpp"
 #include "duckdb/common/mutex.hpp"
+#include <string_view>
 
 namespace duckdb {
 
@@ -25,12 +27,12 @@ public:
 	// Unregister `fs` from the registry. Unregistering a LatencyInjectionFileSystem that is not registered doesn't have
 	// any effect.
 	void Unregister(LatencyInjectionFileSystem *fs);
-	unordered_set<LatencyInjectionFileSystem *> GetAllLatencyFs() const;
+	vector<string> GetWrappedFileSystemNames() const;
 	void Reset();
 
 private:
-	mutable mutex registry_mutex;
-	unordered_set<LatencyInjectionFileSystem *> latency_filesystems;
+	mutable annotated_mutex registry_mutex;
+	unordered_set<LatencyInjectionFileSystem *> latency_filesystems DUCKDB_GUARDED_BY(registry_mutex);
 };
 
 //===--------------------------------------------------------------------===//
@@ -38,8 +40,8 @@ private:
 // Inherits from ObjectCacheEntry for automatic cleanup when DatabaseInstance is destroyed
 //===--------------------------------------------------------------------===//
 struct LatencyInjectionFsInstanceState : public ObjectCacheEntry {
-	static constexpr const char *OBJECT_TYPE = "LatencyInjectionFsInstanceState";
-	static constexpr const char *CACHE_KEY = "latency_injection_fs_instance_state";
+	static constexpr std::string_view OBJECT_TYPE = "LatencyInjectionFsInstanceState";
+	static constexpr std::string_view CACHE_KEY = "latency_injection_fs_instance_state";
 
 	// Latency injection filesystem registry.
 	InstanceLatencyFsRegistry registry;
@@ -48,11 +50,11 @@ struct LatencyInjectionFsInstanceState : public ObjectCacheEntry {
 
 	// ObjectCacheEntry interface
 	string GetObjectType() override {
-		return OBJECT_TYPE;
+		return string(OBJECT_TYPE);
 	}
 
 	static string ObjectType() {
-		return OBJECT_TYPE;
+		return string(OBJECT_TYPE);
 	}
 
 	optional_idx GetEstimatedCacheMemory() const override {
@@ -64,10 +66,7 @@ struct LatencyInjectionFsInstanceState : public ObjectCacheEntry {
 // Helper functions to access instance state
 //===--------------------------------------------------------------------===//
 
-// Store instance state in DatabaseInstance
-void SetInstanceState(DatabaseInstance &instance, shared_ptr<LatencyInjectionFsInstanceState> state);
-
-// Get instance state as shared_ptr from DatabaseInstance (returns nullptr if not set)
+// Atomically get or create instance state in the database object cache
 shared_ptr<LatencyInjectionFsInstanceState> GetInstanceStateShared(DatabaseInstance &instance);
 
 // Get instance state, throwing if not found

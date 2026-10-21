@@ -12,22 +12,27 @@ namespace duckdb {
 //===--------------------------------------------------------------------===//
 
 void InstanceLatencyFsRegistry::Register(LatencyInjectionFileSystem *fs) {
-	lock_guard<mutex> lock(registry_mutex);
+	annotated_lock_guard<annotated_mutex> lock(registry_mutex);
 	latency_filesystems.insert(fs);
 }
 
 void InstanceLatencyFsRegistry::Unregister(LatencyInjectionFileSystem *fs) {
-	lock_guard<mutex> lock(registry_mutex);
+	annotated_lock_guard<annotated_mutex> lock(registry_mutex);
 	latency_filesystems.erase(fs);
 }
 
-unordered_set<LatencyInjectionFileSystem *> InstanceLatencyFsRegistry::GetAllLatencyFs() const {
-	lock_guard<mutex> lock(registry_mutex);
-	return latency_filesystems;
+vector<string> InstanceLatencyFsRegistry::GetWrappedFileSystemNames() const {
+	annotated_lock_guard<annotated_mutex> lock(registry_mutex);
+	vector<string> names;
+	names.reserve(latency_filesystems.size());
+	for (auto *fs : latency_filesystems) {
+		names.push_back(fs->GetWrappedFileSystem()->GetName());
+	}
+	return names;
 }
 
 void InstanceLatencyFsRegistry::Reset() {
-	lock_guard<mutex> lock(registry_mutex);
+	annotated_lock_guard<annotated_mutex> lock(registry_mutex);
 	latency_filesystems.clear();
 }
 
@@ -41,18 +46,9 @@ LatencyInjectionFsInstanceState::LatencyInjectionFsInstanceState() = default;
 // Helper functions to access instance state
 //===--------------------------------------------------------------------===//
 
-void SetInstanceState(DatabaseInstance &instance, shared_ptr<LatencyInjectionFsInstanceState> state) {
-	auto &object_cache = instance.GetObjectCache();
-	object_cache.Put(LatencyInjectionFsInstanceState::CACHE_KEY, std::move(state));
-}
-
 shared_ptr<LatencyInjectionFsInstanceState> GetInstanceStateShared(DatabaseInstance &instance) {
-	auto &object_cache = instance.GetObjectCache();
-	auto entry = object_cache.Get<LatencyInjectionFsInstanceState>(LatencyInjectionFsInstanceState::CACHE_KEY);
-	if (!entry) {
-		return nullptr;
-	}
-	return entry;
+	return instance.GetObjectCache().GetOrCreate<LatencyInjectionFsInstanceState>(
+	    string(LatencyInjectionFsInstanceState::CACHE_KEY));
 }
 
 LatencyInjectionFsInstanceState &GetInstanceStateOrThrow(DatabaseInstance &instance) {

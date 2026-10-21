@@ -87,8 +87,8 @@ TEST_CASE("Test Glob with GlobFilesExtended unsupported", "[glob test]") {
 	auto *mock_ptr = mock_filesystem.get();
 
 	vector<OpenFileInfo> glob_results;
-	glob_results.emplace_back(OpenFileInfo("s3://bucket/snapshots/file1.parquet"));
-	glob_results.emplace_back(OpenFileInfo("s3://bucket/snapshots/file2.parquet"));
+	glob_results.emplace_back("s3://bucket/snapshots/file1.parquet");
+	glob_results.emplace_back("s3://bucket/snapshots/file2.parquet");
 	mock_filesystem->SetExtendedGlobResults(std::move(glob_results));
 
 	LatencyConfig config;
@@ -108,8 +108,8 @@ TEST_CASE("Test Glob uses GlobFilesExtended", "[glob test]") {
 	auto *mock_ptr = mock_filesystem.get();
 
 	vector<OpenFileInfo> glob_results;
-	glob_results.emplace_back(OpenFileInfo("s3://bucket/snapshots/file1.parquet"));
-	glob_results.emplace_back(OpenFileInfo("s3://bucket/snapshots/file2.parquet"));
+	glob_results.emplace_back("s3://bucket/snapshots/file1.parquet");
+	glob_results.emplace_back("s3://bucket/snapshots/file2.parquet");
 	mock_filesystem->SetExtendedGlobResults(std::move(glob_results));
 
 	LatencyConfig config;

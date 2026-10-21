@@ -18,9 +18,7 @@ void LoadInternal(ExtensionLoader &loader) {
 	auto &db = loader.GetDatabaseInstance();
 	auto &config = DBConfig::GetConfig(db);
 
-	// Create per-instance state for this extension
-	auto state = make_shared_ptr<LatencyInjectionFsInstanceState>();
-	SetInstanceState(db, state);
+	GetInstanceStateShared(db);
 
 	// Register a fake filesystem at extension load for testing purpose.
 	auto &opener_filesystem = db.GetFileSystem().Cast<OpenerFileSystem>();
