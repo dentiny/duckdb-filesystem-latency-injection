@@ -15,7 +15,12 @@ format-all: format-fix
 	cmake-format -i CMakeLists.txt
 	cmake-format -i test/unittest/CMakeLists.txt
 
-test_reldebug_unit:
-	./build/reldebug/test/unittest_latency_injection
+UNITTEST_BUILD_MODES := release debug reldebug relassert
+UNITTEST_TARGETS := $(addsuffix _unit,$(addprefix test_,$(UNITTEST_BUILD_MODES)))
 
-.PHONY: format-all test_reldebug_unit
+test_unit: test_release_unit
+
+$(UNITTEST_TARGETS): test_%_unit:
+	./build/$*/test/unittest_latency_injection
+
+.PHONY: format-all test_unit $(UNITTEST_TARGETS)

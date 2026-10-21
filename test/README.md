@@ -15,3 +15,14 @@ For DuckDB v2.0, use Python 3.10 or newer. After a reldebug build, run the SQL a
 make test_reldebug
 make test_reldebug_unit
 ```
+
+The C++ test targets use the matching build mode. Build that mode first:
+
+```sh
+make release && make test_release_unit
+make debug && make test_debug_unit
+make reldebug && make test_reldebug_unit
+make relassert && make test_relassert_unit
+```
+
+`make test_unit` is an alias for `make test_release_unit`, matching the default SQL test mode.
