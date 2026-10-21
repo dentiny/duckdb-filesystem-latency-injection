@@ -100,27 +100,27 @@ TEST_CASE("Test latency injection wraps mock filesystem - Read operation", "[lat
 	// Open file and read
 	auto start_time = std::chrono::high_resolution_clock::now();
 	auto handle = latency_fs->OpenFile(string(TEST_FILENAME), FileOpenFlags::FILE_FLAGS_READ);
-	REQUIRE((handle != nullptr));
+	REQUIRE(handle != nullptr);
 
 	string buffer(TEST_FILESIZE, '\0');
 	latency_fs->Read(*handle, buffer.data(), TEST_FILESIZE, 0);
 	auto end_time = std::chrono::high_resolution_clock::now();
 
 	// Verify data was read correctly
-	REQUIRE((buffer == string(TEST_FILESIZE, 'a')));
+	REQUIRE(buffer == string(TEST_FILESIZE, 'a'));
 
 	// Verify latency was injected (should take at least 1ms)
 	auto duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
-	REQUIRE((duration_ms >= 0)); // Just verify it completed
+	REQUIRE(duration_ms >= 0); // Just verify it completed
 
 	// Verify mock filesystem was called
 	auto read_operations = mock_filesystem_ptr->GetSortedReadOperations();
-	REQUIRE((read_operations.size() == 1));
-	REQUIRE((read_operations[0].start_offset == 0));
-	REQUIRE((read_operations[0].bytes_to_read == TEST_FILESIZE));
+	REQUIRE(read_operations.size() == 1);
+	REQUIRE(read_operations[0].start_offset == 0);
+	REQUIRE(read_operations[0].bytes_to_read == TEST_FILESIZE);
 
 	handle->Close();
-	REQUIRE((close_invocation == 1));
+	REQUIRE(close_invocation == 1);
 }
 
 TEST_CASE("Test latency injection wraps mock filesystem - FileExists operation", "[latency injection test]") {
@@ -141,13 +141,13 @@ TEST_CASE("Test latency injection wraps mock filesystem - FileExists operation",
 	bool exists = latency_fs->FileExists(string(TEST_FILENAME));
 	auto end_time = std::chrono::high_resolution_clock::now();
 
-	REQUIRE((exists == true));
-	REQUIRE((mock_filesystem_ptr->GetFileExistsInvocation() == 1));
+	REQUIRE(exists == true);
+	REQUIRE(mock_filesystem_ptr->GetFileExistsInvocation() == 1);
 
 	// Verify latency was injected
 	// Note: Log-normal distribution can sample very small values, so we just verify it completed
 	auto duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
-	REQUIRE((duration_ms >= 0)); // Just verify it completed (latency may be very small due to log-normal sampling)
+	REQUIRE(duration_ms >= 0); // Just verify it completed (latency may be very small due to log-normal sampling)
 }
 
 TEST_CASE("Test latency injection wraps mock filesystem - ListFiles operation", "[latency injection test]") {
@@ -167,12 +167,12 @@ TEST_CASE("Test latency injection wraps mock filesystem - ListFiles operation", 
 	vector<OpenFileInfo> files = latency_fs->Glob("*");
 	auto end_time = std::chrono::high_resolution_clock::now();
 
-	REQUIRE((mock_filesystem_ptr->GetGlobInvocation() == 1));
+	REQUIRE(mock_filesystem_ptr->GetGlobInvocation() == 1);
 
 	// Verify latency was injected
 	// Note: Log-normal distribution can sample very small values, so we just verify it completed
 	auto duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
-	REQUIRE((duration_ms >= 0)); // Just verify it completed (latency may be very small due to log-normal sampling)
+	REQUIRE(duration_ms >= 0); // Just verify it completed (latency may be very small due to log-normal sampling)
 }
 
 TEST_CASE("Test latency injection can be disabled", "[latency injection test]") {
@@ -192,11 +192,11 @@ TEST_CASE("Test latency injection can be disabled", "[latency injection test]") 
 	latency_fs->Read(*handle, buffer.data(), TEST_FILESIZE, 0);
 	auto end_time = std::chrono::high_resolution_clock::now();
 
-	REQUIRE((buffer == string(TEST_FILESIZE, 'a')));
+	REQUIRE(buffer == string(TEST_FILESIZE, 'a'));
 
 	// With latency disabled, should be very fast
 	auto duration_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
-	REQUIRE((duration_ms < 10)); // Should be much faster without latency
+	REQUIRE(duration_ms < 10); // Should be much faster without latency
 }
 
 TEST_CASE("Inherited handle methods forward to the wrapped handle", "[latency injection test]") {
@@ -210,17 +210,17 @@ TEST_CASE("Inherited handle methods forward to the wrapped handle", "[latency in
 
 	string buffer(4, '\0');
 	latency_handle.Read(buffer.data(), buffer.size(), 7);
-	REQUIRE((buffer == "aaaa"));
-	REQUIRE((inner.GetSortedReadOperations()[0].start_offset == 7));
-	REQUIRE((latency_handle.Trim(3, 5)));
-	REQUIRE((latency_handle.GetWriteMode() == FileWriteMode::POSITIONAL));
+	REQUIRE(buffer == "aaaa");
+	REQUIRE(inner.GetSortedReadOperations()[0].start_offset == 7);
+	REQUIRE(latency_handle.Trim(3, 5));
+	REQUIRE(latency_handle.GetWriteMode() == FileWriteMode::POSITIONAL);
 	latency_handle.Reset();
-	REQUIRE((inner.reset_forwarded));
+	REQUIRE(inner.reset_forwarded);
 	latency_handle.AbortWrite();
-	REQUIRE((inner.abort_forwarded));
+	REQUIRE(inner.abort_forwarded);
 	NetworkThroughputEstimate throughput;
-	REQUIRE((latency_handle.TryGetNetworkThroughput(throughput)));
-	REQUIRE((throughput.bandwidth_bytes_per_s == 1024));
+	REQUIRE(latency_handle.TryGetNetworkThroughput(throughput));
+	REQUIRE(throughput.bandwidth_bytes_per_s == 1024);
 }
 
 TEST_CASE("Extended listing retains directory and backend metadata", "[latency injection test]") {
@@ -228,17 +228,17 @@ TEST_CASE("Extended listing retains directory and backend metadata", "[latency i
 	config.enabled = false;
 	LatencyInjectionFileSystem fs(make_uniq<ForwardingMockFileSystem>(), config, {});
 	bool is_directory = false;
-	REQUIRE((fs.ListFiles("parent", [&](const string &, bool is_dir) { is_directory = is_dir; })));
-	REQUIRE((is_directory));
+	REQUIRE(fs.ListFiles("parent", [&](const string &, bool is_dir) { is_directory = is_dir; }));
+	REQUIRE(is_directory);
 	string version_tag;
 	REQUIRE(fs.ListFilesExtended(
 	    "parent",
 	    [&](OpenFileInfo &info) {
-		    REQUIRE((FileSystem::IsDirectory(info)));
+		    REQUIRE(FileSystem::IsDirectory(info));
 		    version_tag = info.extended_info->options.at("version_tag").GetValue<string>();
 	    },
 	    nullptr));
-	REQUIRE((version_tag == "preserved"));
+	REQUIRE(version_tag == "preserved");
 }
 
 TEST_CASE("Wrapping reads connection-local settings", "[latency injection test]") {
@@ -251,11 +251,11 @@ TEST_CASE("Wrapping reads connection-local settings", "[latency injection test]"
 	    connection.Query("SELECT latency_inject_fs_wrap('latency_injection_fs_fake_filesystem')")->HasError());
 	auto &vfs = db.instance->GetFileSystem().Cast<OpenerFileSystem>().GetFileSystem();
 	auto wrapped = vfs.ExtractSubSystem("LatencyInjectionFileSystem(latency_injection_fs_fake_filesystem)");
-	REQUIRE((wrapped));
+	REQUIRE(wrapped);
 	const auto &config = wrapped->Cast<LatencyInjectionFileSystem>().GetLatencyModel().GetConfig();
 	REQUIRE_FALSE(config.enabled);
-	REQUIRE((config.read_base_mean_ms == 123));
-	REQUIRE((GetInstanceStateShared(*db.instance) == GetInstanceStateShared(*db.instance)));
+	REQUIRE(config.read_base_mean_ms == 123);
+	REQUIRE(GetInstanceStateShared(*db.instance) == GetInstanceStateShared(*db.instance));
 }
 
 TEST_CASE("Registry names remain safe during wrapper destruction", "[latency injection test]") {
@@ -278,7 +278,7 @@ TEST_CASE("Registry names remain safe during wrapper destruction", "[latency inj
 	running.store(false);
 	reader.join();
 	REQUIRE_FALSE(invalid_snapshot.load());
-	REQUIRE((state->registry.GetWrappedFileSystemNames().empty()));
+	REQUIRE(state->registry.GetWrappedFileSystemNames().empty());
 }
 
 } // namespace duckdb
