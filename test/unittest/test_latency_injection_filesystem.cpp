@@ -13,7 +13,7 @@
 #include <chrono>
 #include <thread>
 
-namespace duckdb {
+using namespace duckdb; // NOLINT
 
 namespace {
 constexpr std::string_view TEST_FILENAME = "test_file.txt";
@@ -280,5 +280,3 @@ TEST_CASE("Registry names remain safe during wrapper destruction", "[latency inj
 	REQUIRE_FALSE(invalid_snapshot.load());
 	REQUIRE(state->registry.GetWrappedFileSystemNames().empty());
 }
-
-} // namespace duckdb

@@ -4,7 +4,7 @@
 #include "latency_injection_file_system.hpp"
 #include "latency_injection_fs_instance_state.hpp"
 
-namespace duckdb {
+using namespace duckdb;
 
 namespace {
 
@@ -122,5 +122,3 @@ TEST_CASE("Test Glob uses GlobFilesExtended", "[glob test]") {
 	REQUIRE(results[0].path == "s3://bucket/snapshots/file1.parquet");
 	REQUIRE(results[1].path == "s3://bucket/snapshots/file2.parquet");
 }
-
-} // namespace duckdb
