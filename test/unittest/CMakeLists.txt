@@ -13,6 +13,10 @@ file(GLOB_RECURSE LATENCY_INJECTION_FS_UNITTEST_OBJECTS
 add_executable(unittest_latency_injection
                main.cpp ${LATENCY_INJECTION_FS_UNITTEST_OBJECTS})
 
+set_target_properties(
+  unittest_latency_injection PROPERTIES RUNTIME_OUTPUT_DIRECTORY
+                                        "${CMAKE_BINARY_DIR}/test")
+
 if(NOT WIN32
    AND NOT SUN
    AND NOT ZOS)

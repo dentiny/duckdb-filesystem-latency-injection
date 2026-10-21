@@ -1,6 +1,7 @@
 #include "latency_injection_file_system.hpp"
 
 #include "duckdb/common/multi_file/multi_file_list.hpp"
+#include "duckdb/common/query_context.hpp"
 #include "duckdb/common/string_util.hpp"
 #include "latency_injection_fs_instance_state.hpp"
 
@@ -201,14 +202,7 @@ bool LatencyInjectionFileSystem::ListFilesExtended(const string &directory,
                                                    const std::function<void(OpenFileInfo &info)> &callback,
                                                    optional_ptr<FileOpener> opener) {
 	ApplyListLatency();
-	return wrapped_fs->ListFiles(
-	    directory,
-	    [&callback](const string &name, bool is_dir) {
-		    OpenFileInfo info;
-		    info.path = name;
-		    callback(info);
-	    },
-	    opener.get());
+	return wrapped_fs->ListFiles(directory, callback, opener);
 }
 
 bool LatencyInjectionFileSystem::FileExists(const string &filename, optional_ptr<FileOpener> opener) {
@@ -266,10 +260,6 @@ void LatencyInjectionFileSystem::RegisterSubSystem(unique_ptr<FileSystem> sub_fs
 	wrapped_fs->RegisterSubSystem(std::move(sub_fs));
 }
 
-void LatencyInjectionFileSystem::RegisterSubSystem(FileCompressionType compression_type, unique_ptr<FileSystem> fs) {
-	wrapped_fs->RegisterSubSystem(compression_type, std::move(fs));
-}
-
 void LatencyInjectionFileSystem::UnregisterSubSystem(const string &name) {
 	wrapped_fs->UnregisterSubSystem(name);
 }
@@ -304,6 +294,26 @@ bool LatencyInjectionFileSystem::CanSeek() {
 
 void LatencyInjectionFileSystem::Seek(FileHandle &handle, idx_t location) {
 	wrapped_fs->Seek(GetInternalHandle(handle), location);
+}
+
+void LatencyInjectionFileSystem::Reset(FileHandle &handle) {
+	wrapped_fs->Reset(GetInternalHandle(handle));
+}
+
+void LatencyInjectionFileSystem::AbortFileWrite(FileHandle &handle) {
+	wrapped_fs->AbortFileWrite(GetInternalHandle(handle));
+}
+
+bool LatencyInjectionFileSystem::Trim(FileHandle &handle, idx_t offset_bytes, idx_t length_bytes) {
+	return wrapped_fs->Trim(GetInternalHandle(handle), offset_bytes, length_bytes);
+}
+
+FileWriteMode LatencyInjectionFileSystem::GetWriteMode(FileHandle &handle) {
+	return wrapped_fs->GetWriteMode(GetInternalHandle(handle));
+}
+
+bool LatencyInjectionFileSystem::TryGetNetworkThroughput(FileHandle &handle, NetworkThroughputEstimate &result) {
+	return wrapped_fs->TryGetNetworkThroughput(GetInternalHandle(handle), result);
 }
 
 idx_t LatencyInjectionFileSystem::SeekPosition(FileHandle &handle) {

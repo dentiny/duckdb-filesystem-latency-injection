@@ -46,6 +46,10 @@ public:
 	FileType GetFileType(FileHandle &handle) override;
 	void Truncate(FileHandle &handle, int64_t new_size) override;
 	void FileSync(FileHandle &handle) override;
+	void AbortFileWrite(FileHandle &handle) override;
+	bool Trim(FileHandle &handle, idx_t offset_bytes, idx_t length_bytes) override;
+	FileWriteMode GetWriteMode(FileHandle &handle) override;
+	bool TryGetNetworkThroughput(FileHandle &handle, NetworkThroughputEstimate &result) override;
 
 	bool DirectoryExists(const string &directory, optional_ptr<FileOpener> opener = nullptr) override;
 	void CreateDirectory(const string &directory, optional_ptr<FileOpener> opener = nullptr) override;
@@ -71,7 +75,6 @@ public:
 	string ExpandPath(const string &path) override;
 
 	void RegisterSubSystem(unique_ptr<FileSystem> sub_fs) override;
-	void RegisterSubSystem(FileCompressionType compression_type, unique_ptr<FileSystem> fs) override;
 	void UnregisterSubSystem(const string &name) override;
 	unique_ptr<FileSystem> ExtractSubSystem(const string &name) override;
 	vector<string> ListSubSystems() override;
@@ -82,6 +85,7 @@ public:
 	bool IsManuallySet() override;
 	bool CanSeek() override;
 	void Seek(FileHandle &handle, idx_t location) override;
+	void Reset(FileHandle &handle) override;
 	idx_t SeekPosition(FileHandle &handle) override;
 	bool OnDiskFile(FileHandle &handle) override;
 

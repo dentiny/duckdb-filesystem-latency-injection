@@ -9,3 +9,9 @@ or
 ```bash
 make test_debug
 ```
+For DuckDB v2.0, use Python 3.10 or newer. After a reldebug build, run the SQL and C++ suites with:
+
+```sh
+make test_reldebug
+make test_reldebug_unit
+```

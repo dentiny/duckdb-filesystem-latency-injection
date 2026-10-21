@@ -4,7 +4,7 @@
 #include "latency_injection_file_system.hpp"
 #include "latency_injection_fs_instance_state.hpp"
 
-using namespace duckdb;
+namespace duckdb {
 
 namespace {
 
@@ -87,18 +87,18 @@ TEST_CASE("Test Glob with GlobFilesExtended unsupported", "[glob test]") {
 	auto *mock_ptr = mock_filesystem.get();
 
 	vector<OpenFileInfo> glob_results;
-	glob_results.emplace_back(OpenFileInfo("s3://bucket/snapshots/file1.parquet"));
-	glob_results.emplace_back(OpenFileInfo("s3://bucket/snapshots/file2.parquet"));
+	glob_results.emplace_back("s3://bucket/snapshots/file1.parquet");
+	glob_results.emplace_back("s3://bucket/snapshots/file2.parquet");
 	mock_filesystem->SetExtendedGlobResults(std::move(glob_results));
 
 	LatencyConfig config;
 	auto latency_fs = make_uniq<LatencyInjectionFileSystem>(std::move(mock_filesystem), config,
 	                                                        weak_ptr<LatencyInjectionFsInstanceState>());
 	auto results = latency_fs->Glob("s3://bucket/snapshots/*.parquet");
-	REQUIRE(mock_ptr->GetGlobInvocation() == 1);
-	REQUIRE(results.size() == 2);
-	REQUIRE(results[0].path == "s3://bucket/snapshots/file1.parquet");
-	REQUIRE(results[1].path == "s3://bucket/snapshots/file2.parquet");
+	REQUIRE((mock_ptr->GetGlobInvocation() == 1));
+	REQUIRE((results.size() == 2));
+	REQUIRE((results[0].path == "s3://bucket/snapshots/file1.parquet"));
+	REQUIRE((results[1].path == "s3://bucket/snapshots/file2.parquet"));
 }
 
 // Regression test: must use GlobFilesExtended when the internal filesystem supports it.
@@ -108,17 +108,19 @@ TEST_CASE("Test Glob uses GlobFilesExtended", "[glob test]") {
 	auto *mock_ptr = mock_filesystem.get();
 
 	vector<OpenFileInfo> glob_results;
-	glob_results.emplace_back(OpenFileInfo("s3://bucket/snapshots/file1.parquet"));
-	glob_results.emplace_back(OpenFileInfo("s3://bucket/snapshots/file2.parquet"));
+	glob_results.emplace_back("s3://bucket/snapshots/file1.parquet");
+	glob_results.emplace_back("s3://bucket/snapshots/file2.parquet");
 	mock_filesystem->SetExtendedGlobResults(std::move(glob_results));
 
 	LatencyConfig config;
 	auto latency_fs = make_uniq<LatencyInjectionFileSystem>(std::move(mock_filesystem), config,
 	                                                        weak_ptr<LatencyInjectionFsInstanceState>());
 	auto results = latency_fs->Glob("s3://bucket/snapshots/*.parquet");
-	REQUIRE(mock_ptr->GetGlobInvocation() == 0);
-	REQUIRE(mock_ptr->GetGlobExtendedInvocation() == 1);
-	REQUIRE(results.size() == 2);
-	REQUIRE(results[0].path == "s3://bucket/snapshots/file1.parquet");
-	REQUIRE(results[1].path == "s3://bucket/snapshots/file2.parquet");
+	REQUIRE((mock_ptr->GetGlobInvocation() == 0));
+	REQUIRE((mock_ptr->GetGlobExtendedInvocation() == 1));
+	REQUIRE((results.size() == 2));
+	REQUIRE((results[0].path == "s3://bucket/snapshots/file1.parquet"));
+	REQUIRE((results[1].path == "s3://bucket/snapshots/file2.parquet"));
 }
+
+} // namespace duckdb

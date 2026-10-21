@@ -2,7 +2,8 @@
 
 #include "latency_injection_fs_instance_state.hpp"
 #include "latency_injection_file_system.hpp"
-#include "duckdb/common/opener_file_system.hpp"
+#include "duckdb/common/identifier.hpp"
+#include "duckdb/common/vector/vector_writer.hpp"
 #include "duckdb/main/client_context.hpp"
 #include "duckdb/main/database.hpp"
 
@@ -23,7 +24,7 @@ struct WrappedFilesystemsData : public GlobalTableFunctionState {
 };
 
 unique_ptr<FunctionData> WrappedLatencyFsFuncBind(ClientContext &context, TableFunctionBindInput &input,
-                                                  vector<LogicalType> &return_types, vector<string> &names) {
+                                                  vector<LogicalType> &return_types, vector<Identifier> &names) {
 	D_ASSERT(return_types.empty());
 	D_ASSERT(names.empty());
 
@@ -31,7 +32,7 @@ unique_ptr<FunctionData> WrappedLatencyFsFuncBind(ClientContext &context, TableF
 	names.reserve(1);
 
 	// Wrapped latency injection filesystem name.
-	return_types.emplace_back(LogicalType {LogicalTypeId::VARCHAR});
+	return_types.push_back(LogicalType::VARCHAR);
 	names.emplace_back("wrapped_filesystems");
 
 	return nullptr;
@@ -40,45 +41,23 @@ unique_ptr<FunctionData> WrappedLatencyFsFuncBind(ClientContext &context, TableF
 unique_ptr<GlobalTableFunctionState> WrappedLatencyFsFuncInit(ClientContext &context, TableFunctionInitInput &input) {
 	auto result = make_uniq<WrappedFilesystemsData>();
 	auto &wrapped_filesystems = result->wrapped_filesystems;
-
-	// Get latency injection filesystems from per-instance registry
-	auto &inst_state = GetInstanceStateOrThrow(*context.db);
-	auto latency_filesystem_instances = inst_state.registry.GetAllLatencyFs();
-	wrapped_filesystems.reserve(latency_filesystem_instances.size());
-
-	for (auto *cur_latency_fs : latency_filesystem_instances) {
-		auto *wrapped_fs = cur_latency_fs->GetWrappedFileSystem();
-		if (wrapped_fs) {
-			wrapped_filesystems.emplace_back(wrapped_fs->GetName());
-		}
-	}
+	wrapped_filesystems = GetInstanceStateOrThrow(context).registry.GetWrappedFileSystemNames();
 
 	// Sort the results to ensure determinism and testability.
 	std::sort(wrapped_filesystems.begin(), wrapped_filesystems.end());
 
-	return std::move(result);
+	return result;
 }
 
 void WrappedLatencyFsTableFunc(ClientContext &context, TableFunctionInput &data_p, DataChunk &output) {
 	auto &data = data_p.global_state->Cast<WrappedFilesystemsData>();
 
-	// All entries have been emitted.
-	if (data.offset >= data.wrapped_filesystems.size()) {
-		return;
+	auto count = MinValue<idx_t>(data.wrapped_filesystems.size() - data.offset, STANDARD_VECTOR_SIZE);
+	auto writer = FlatVector::Writer<string_t>(output.data[0], count);
+	for (idx_t row = 0; row < count; row++) {
+		writer.WriteValue(data.wrapped_filesystems[data.offset++]);
 	}
-
-	// Start filling in the result buffer.
-	idx_t count = 0;
-	while (data.offset < data.wrapped_filesystems.size() && count < STANDARD_VECTOR_SIZE) {
-		auto &entry = data.wrapped_filesystems[data.offset++];
-		idx_t col = 0;
-
-		// Wrapped latency injection filesystem name.
-		output.SetValue(col, count, entry);
-
-		count++;
-	}
-	output.SetCardinality(count);
+	output.CheckCardinality(count);
 }
 
 } // namespace

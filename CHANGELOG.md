@@ -1,3 +1,18 @@
+## 0.2.0
+
+### Changed
+
+- Upgrade DuckDB to `v2.0.0` and pin extension-ci-tools to `fe955ed3a046b0324cac2c691e73d8d776a7d5cc`.
+- Require standard C++17, use `constexpr std::string_view` constants, and adopt DuckDB v2.0 identifiers, vector writers, and annotated mutexes.
+- Use atomic object-cache state creation and typed connection settings, and remove redundant file-handle forwarding.
+
+### Fixed
+
+- Preserve connection-local latency settings and extended directory listing metadata.
+- Execute filesystem wrapping per non-NULL input row and defer its side effects until execution.
+- Snapshot registry names under the registry lock to avoid dereferencing destroyed wrappers.
+- Forward write modes, aborted writes, trim, reset, and throughput estimates to the wrapped filesystem.
+
 ## 0.1.4
 
 ### Changed
