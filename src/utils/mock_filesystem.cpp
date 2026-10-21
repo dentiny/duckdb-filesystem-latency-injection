@@ -13,12 +13,8 @@ MockFileHandle::MockFileHandle(FileSystem &file_system, string path, FileOpenFla
 }
 
 MockFileHandle::~MockFileHandle() {
-	try {
-		if (dtor_callback) {
-			dtor_callback();
-		}
-	} catch (...) {
-		std::terminate();
+	if (dtor_callback) {
+		dtor_callback();
 	}
 }
 
