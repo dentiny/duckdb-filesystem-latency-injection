@@ -1,0 +1,46 @@
+# name: test/sql/wrap_filesystem_idempotent.test
+# description: filesystem wrapping is volatile and safe to repeat.
+# group: [sql]
+
+require latency_injection_fs
+
+query TI
+SELECT stability, has_side_effects FROM duckdb_functions()
+WHERE function_name = 'latency_inject_fs_wrap';
+----
+VOLATILE	true
+
+# Planning must not mutate the filesystem registry.
+statement ok
+PREPARE wrap_filesystem AS SELECT latency_inject_fs_wrap('latency_injection_fs_fake_filesystem');
+
+query I
+SELECT COUNT(*) FROM latency_inject_fs_list_filesystems() WHERE wrapped_filesystems = 'latency_injection_fs_fake_filesystem';
+----
+0
+
+query I
+EXECUTE wrap_filesystem;
+----
+true
+
+# Re-executing the same statement must reuse the existing wrapper.
+query I
+EXECUTE wrap_filesystem;
+----
+true
+
+query I
+SELECT latency_inject_fs_wrap('latency_injection_fs_fake_filesystem');
+----
+true
+
+query I
+SELECT COUNT(*) FROM latency_inject_fs_list_filesystems() WHERE wrapped_filesystems = 'latency_injection_fs_fake_filesystem';
+----
+1
+
+statement error
+SELECT latency_inject_fs_wrap('unregistered_filesystem');
+----
+Filesystem unregistered_filesystem hasn't been registered yet!
