@@ -1,7 +1,10 @@
 #include "latency_injection_fs_functions.hpp"
 
+#include <algorithm>
+
 #include "duckdb/common/exception.hpp"
 #include "duckdb/common/opener_file_system.hpp"
+#include "duckdb/common/string_util.hpp"
 #include "duckdb/common/vector_operations/unary_executor.hpp"
 #include "duckdb/execution/expression_executor_state.hpp"
 #include "duckdb/function/scalar_function.hpp"
@@ -50,6 +53,12 @@ void WrapLatencyFileSystem(DataChunk &args, ExpressionState &state, Vector &resu
 		auto filesystem_name = name.GetString();
 		auto internal_filesystem = vfs.ExtractSubSystem(filesystem_name);
 		if (!internal_filesystem) {
+			// Repeating a wrap preserves the existing wrapper and its latency configuration.
+			const auto wrapped_name = StringUtil::Format("LatencyInjectionFileSystem(%s)", filesystem_name);
+			const auto registered = vfs.ListSubSystems();
+			if (std::find(registered.begin(), registered.end(), wrapped_name) != registered.end()) {
+				return true;
+			}
 			throw InvalidInputException("Filesystem %s hasn't been registered yet! Use "
 			                            "latency_inject_fs_list_filesystems() to see available filesystems.",
 			                            filesystem_name);
