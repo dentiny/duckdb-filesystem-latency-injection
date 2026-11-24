@@ -2,7 +2,7 @@
 
 # Extension from this repo
 duckdb_extension_load(latency_injection_fs
-    SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}
+    SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR} EXTENSION_VERSION 0.2.1
     LOAD_TESTS
 )
 
